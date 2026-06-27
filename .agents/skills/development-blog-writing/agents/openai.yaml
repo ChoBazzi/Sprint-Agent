@@ -1,0 +1,4 @@
+interface:
+  display_name: "Development Blog Writing"
+  short_description: "Turn development decisions and troubleshooting into blog drafts."
+  default_prompt: "Summarize this development session into a clear technical blog draft."

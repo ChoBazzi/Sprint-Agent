@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkItemStatus {
+  BACKLOG
+  PLANNED
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  SKIPPED
+}
+
+enum ApplicationStatus {
+  INTERESTED
+  PREPARING
+  APPLIED
+  CODING_TEST
+  INTERVIEW
+  OFFER
+  REJECTED
+  ARCHIVED
+}
+
+enum StudyStatus {
+  BACKLOG
+  PLANNED
+  IN_PROGRESS
+  REVIEWING
+  DONE
+}
+
+enum ProjectStatus {
+  IDEA
+  ACTIVE
+  BLOCKED
+  POLISHING
+  READY
+  ARCHIVED
+}
+
+model Sprint {
+  id        String     @id @default(cuid())
+  name      String
+  goal      String
+  startsOn  DateTime
+  endsOn    DateTime
+  isActive  Boolean    @default(false)
+  capacity  Int?
+  review    String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  workItems WorkItem[]
+
+  @@index([isActive])
+  @@index([startsOn, endsOn])
+}
+
+model WorkItem {
+  id          String         @id @default(cuid())
+  sprintId    String?
+  title       String
+  description String?
+  status      WorkItemStatus @default(BACKLOG)
+  area        String
+  dueDate     DateTime?
+  estimate    Int?
+  priority    Int            @default(2)
+  blocker     String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  sprint      Sprint?        @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+
+  @@index([sprintId, status])
+  @@index([dueDate])
+  @@index([area])
+}
+
+model JobApplication {
+  id              String            @id @default(cuid())
+  company         String
+  role            String
+  postingUrl      String?
+  deadline        DateTime?
+  status          ApplicationStatus @default(INTERESTED)
+  resumeVersionId String?
+  nextAction      String?
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  resumeVersion   ResumeVersion?    @relation(fields: [resumeVersionId], references: [id], onDelete: SetNull)
+
+  @@index([deadline])
+  @@index([status])
+}
+
+model ResumeVersion {
+  id           String           @id @default(cuid())
+  name         String
+  targetRole   String?
+  changeNotes  String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  applications JobApplication[]
+}
+
+model StudyItem {
+  id             String      @id @default(cuid())
+  topic          String
+  resource       String?
+  targetDate     DateTime?
+  estimatedHours Int?
+  progress       Int         @default(0)
+  status         StudyStatus @default(BACKLOG)
+  reviewDate     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([targetDate])
+  @@index([status])
+}
+
+model PortfolioProject {
+  id              String        @id @default(cuid())
+  name            String
+  goal            String
+  stack           String?
+  status          ProjectStatus @default(IDEA)
+  nextAction      String?
+  hasReadme       Boolean       @default(false)
+  hasDemo         Boolean       @default(false)
+  hasDeployment   Boolean       @default(false)
+  hasTests        Boolean       @default(false)
+  portfolioReady  Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([portfolioReady])
+}
