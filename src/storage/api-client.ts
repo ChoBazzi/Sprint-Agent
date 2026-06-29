@@ -1,5 +1,10 @@
 import type { AssistantResponse, DailyPlanRequest } from "../domain/assistant";
 import type {
+  CalendarEventDraft,
+  CalendarExportResult,
+  CalendarProviderStatus
+} from "../domain/calendar";
+import type {
   ApplicationStatus,
   JobApplication,
   ResumeVersion
@@ -111,6 +116,8 @@ export type PatchProjectPayload = {
   hasTests?: boolean;
   portfolioReady?: boolean;
 };
+
+export type CreateCalendarEventPayload = CalendarEventDraft;
 
 export async function getActiveSprint(): Promise<Sprint | null> {
   const result = await request<ApiResult<Sprint | null>>("/api/sprints/active");
@@ -293,6 +300,26 @@ export async function createProjectReview(userInstruction?: string): Promise<Ass
   const result = await request<ApiResult<AssistantResponse>>("/api/assistant/project-review", {
     method: "POST",
     body: JSON.stringify({ userInstruction })
+  });
+  return result.data;
+}
+
+export async function getGoogleCalendarStatus(): Promise<CalendarProviderStatus> {
+  const result = await request<ApiResult<CalendarProviderStatus>>("/api/calendar/google/status");
+  return result.data;
+}
+
+export async function getGoogleCalendarAuthUrl(): Promise<string> {
+  const result = await request<ApiResult<{ url: string }>>("/api/calendar/google/auth-url");
+  return result.data.url;
+}
+
+export async function createGoogleCalendarEvent(
+  payload: CreateCalendarEventPayload
+): Promise<CalendarExportResult> {
+  const result = await request<ApiResult<CalendarExportResult>>("/api/calendar/google/events", {
+    method: "POST",
+    body: JSON.stringify(payload)
   });
   return result.data;
 }

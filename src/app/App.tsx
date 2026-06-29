@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApplicationTracker } from "../components/applications/ApplicationTracker";
 import { AssistantPanel } from "../components/assistant/AssistantPanel";
+import { CalendarHandoffPanel } from "../components/calendar/CalendarHandoffPanel";
 import { DailyCommandCenter } from "../components/dashboard/DailyCommandCenter";
 import { ProjectTracker } from "../components/projects/ProjectTracker";
 import { SprintBoard } from "../components/sprint/SprintBoard";
 import { StudyPlanner } from "../components/study/StudyPlanner";
 import type { AssistantResponse } from "../domain/assistant";
+import type { CalendarExportResult, CalendarProviderStatus } from "../domain/calendar";
 import type { JobApplication, ResumeVersion } from "../domain/applications";
 import type { PortfolioProject } from "../domain/projects";
 import type { StudyItem } from "../domain/study";
@@ -13,6 +15,7 @@ import type { Sprint, WorkItemStatus } from "../domain/sprint";
 import {
   createDailyPlan,
   createApplicationReview,
+  createGoogleCalendarEvent,
   createJobApplication,
   createProject,
   createProjectReview,
@@ -23,6 +26,8 @@ import {
   createWorkItem,
   deleteWorkItem,
   getActiveSprint,
+  getGoogleCalendarAuthUrl,
+  getGoogleCalendarStatus,
   listJobApplications,
   listProjects,
   listResumeVersions,
@@ -34,6 +39,7 @@ import {
   updateResumeVersion,
   updateWorkItemStatus,
   type CreateJobApplicationPayload,
+  type CreateCalendarEventPayload,
   type CreateProjectPayload,
   type CreateResumeVersionPayload,
   type CreateSprintPayload,
@@ -56,7 +62,10 @@ export function App() {
   const [applicationFilters, setApplicationFilters] = useState<JobApplicationListParams>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
+  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
   const [assistantResponse, setAssistantResponse] = useState<AssistantResponse | null>(null);
+  const [calendarStatus, setCalendarStatus] = useState<CalendarProviderStatus | null>(null);
+  const [calendarResult, setCalendarResult] = useState<CalendarExportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refreshWorkspace = useCallback(async () => {
@@ -92,6 +101,18 @@ export function App() {
   useEffect(() => {
     void refreshWorkspace();
   }, [refreshWorkspace]);
+
+  const refreshCalendarStatus = useCallback(async () => {
+    try {
+      setCalendarStatus(await getGoogleCalendarStatus());
+    } catch {
+      setCalendarStatus(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshCalendarStatus();
+  }, [refreshCalendarStatus]);
 
   async function handleCreateSprint(input: CreateSprintPayload) {
     setError(null);
@@ -246,6 +267,32 @@ export function App() {
     await requestAssistantResponse(() => createProjectReview());
   }
 
+  async function handleConnectGoogleCalendar() {
+    setIsCalendarLoading(true);
+    setError(null);
+
+    try {
+      window.location.href = await getGoogleCalendarAuthUrl();
+    } catch {
+      setError("Google Calendar 연결 URL 생성에 실패했습니다.");
+      setIsCalendarLoading(false);
+    }
+  }
+
+  async function handleCreateGoogleCalendarEvent(input: CreateCalendarEventPayload) {
+    setIsCalendarLoading(true);
+    setError(null);
+
+    try {
+      setCalendarResult(await createGoogleCalendarEvent(input));
+      await refreshCalendarStatus();
+    } catch {
+      setError("Google Calendar 이벤트 생성에 실패했습니다.");
+    } finally {
+      setIsCalendarLoading(false);
+    }
+  }
+
   async function requestAssistantResponse(request: () => Promise<AssistantResponse>) {
     setIsAssistantLoading(true);
     setError(null);
@@ -277,6 +324,13 @@ export function App() {
         onRequestSprintReview={handleRequestSprintReview}
         onRequestApplicationReview={handleRequestApplicationReview}
         onRequestProjectReview={handleRequestProjectReview}
+      />
+      <CalendarHandoffPanel
+        status={calendarStatus}
+        result={calendarResult}
+        isLoading={isCalendarLoading}
+        onConnect={handleConnectGoogleCalendar}
+        onCreateEvent={handleCreateGoogleCalendarEvent}
       />
       <SprintBoard
         sprint={sprint}

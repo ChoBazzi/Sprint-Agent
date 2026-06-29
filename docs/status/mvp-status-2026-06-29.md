@@ -34,6 +34,12 @@
   - Optional `AI_ASSISTANT_MODE=codex` calls local `codex exec` in read-only mode.
   - Browser never receives Codex credentials.
   - Assistant suggestions do not mutate user data.
+- Google Calendar handoff:
+  - App remains the source of truth for study, sprint, project, and personal planning.
+  - Google Calendar is an optional external reflection layer for confirmed time blocks.
+  - OAuth uses the narrow `https://www.googleapis.com/auth/calendar.events` scope.
+  - Calendar tokens are stored only in ignored local files under `private/`.
+  - Calendar events are created only after explicit user action.
 - Local database operations:
   - `npm run db:up` starts PostgreSQL.
   - `npm run db:seed` creates sample data.
@@ -47,7 +53,7 @@
 - README quick-start and command documentation.
 
 ## Verification
-- `npm run test` passed: 9 files, 32 tests.
+- `npm run test` passed: 10 files, 35 tests.
 - `npm run build` passed.
 - `npm run lint` passed.
 - `npm run test:e2e` passed: 4 Playwright tests.
@@ -71,7 +77,7 @@ npm run dev
 
 ## Not Yet Implemented
 - Authentication and authorization; intentionally deferred because this is a local personal tool.
-- Calendar integration, job-site crawling, email automation, Notion sync, and resume file upload.
+- Google Calendar read/sync, job-site crawling, email automation, Notion sync, and resume file upload.
 - Assistant actions that apply changes automatically; intentionally out of scope.
 - Real deployment target; this is currently optimized for local personal use.
 
@@ -79,3 +85,4 @@ npm run dev
 - Decide whether to keep this as local-only or add a private deployment target.
 - Add restore verification against a disposable database before relying on backups for important personal data.
 - Add authentication only if the app is deployed beyond the local machine.
+- Decide whether Google Calendar should stay export-only or later support conflict-aware import/sync.

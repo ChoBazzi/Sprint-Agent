@@ -12,6 +12,8 @@ test("renders seeded workspace data", async ({ page }) => {
   await expect(
     page.getByRole("list", { name: "Portfolio projects" }).getByText("Developer Job-Prep Assistant")
   ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Google Calendar Handoff" })).toBeVisible();
+  await expect(page.getByText("환경 설정 필요")).toBeVisible();
 });
 
 test("creates, edits, and deletes a sprint work item", async ({ page }) => {

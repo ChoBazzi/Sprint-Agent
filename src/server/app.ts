@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import { createAssistantRouter } from "./api/assistant.js";
 import { createApplicationRouter } from "./api/applications.js";
+import { createCalendarRouter, toCalendarApiError } from "./api/calendar.js";
 import { createProjectRouter } from "./api/projects.js";
 import { createSprintRouter, toApiError } from "./api/sprints.js";
 import { createStudyRouter } from "./api/study.js";
@@ -30,13 +31,14 @@ export function createApp() {
   app.use("/api", createApplicationRouter(applicationRepository));
   app.use("/api", createStudyRouter(studyRepository));
   app.use("/api", createProjectRouter(projectRepository));
+  app.use("/api", createCalendarRouter());
   app.use(
     "/api",
     createAssistantRouter(sprintRepository, applicationRepository, studyRepository, projectRepository)
   );
 
   app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
-    const apiError = toApiError(error);
+    const apiError = toCalendarApiError(error) ?? toApiError(error);
     response.status(apiError.status).json(apiError.body);
   });
 

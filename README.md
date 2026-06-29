@@ -39,6 +39,7 @@ npm run dev
 - ORM/migrations: Prisma
 - Tests: Vitest and Playwright
 - AI assistant: server-side adapter around local `codex exec`
+- Calendar: optional Google Calendar handoff through server-side OAuth
 
 The browser calls application-owned endpoints only. Codex credentials and local auth state stay outside the repository and are never sent to the frontend.
 
@@ -52,6 +53,7 @@ Implemented MVP workflows:
 - Study planner with progress, target dates, review dates, and statuses.
 - Portfolio project tracker with next actions and readiness flags.
 - Assistant endpoints for daily plan, sprint review, application review, and project review.
+- Google Calendar handoff for confirmed focus blocks.
 
 Deferred by design:
 
@@ -77,6 +79,24 @@ CODEX_ASSISTANT_TIMEOUT_MS=60000
 ```
 
 The backend calls `codex exec` in read-only mode and expects structured JSON. If Codex fails, the API falls back to the local deterministic assistant and includes a warning.
+
+## Google Calendar
+
+Google Calendar is optional. The app remains the source of truth, and Google Calendar is used for confirmed time blocks and phone calendar visibility.
+
+Set these values in `.env` after creating a Google OAuth client:
+
+```env
+APP_ORIGIN="http://127.0.0.1:5173"
+GOOGLE_CALENDAR_CLIENT_ID=""
+GOOGLE_CALENDAR_CLIENT_SECRET=""
+GOOGLE_CALENDAR_REDIRECT_URI="http://127.0.0.1:3001/api/calendar/google/callback"
+GOOGLE_CALENDAR_ID="primary"
+GOOGLE_CALENDAR_TOKEN_PATH="private/google-calendar-token.json"
+GOOGLE_CALENDAR_STATE_PATH="private/google-calendar-state.json"
+```
+
+The OAuth token file is intentionally stored under `private/`, which is ignored by Git.
 
 ## Data Boundary
 

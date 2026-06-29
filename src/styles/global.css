@@ -418,6 +418,7 @@ button:hover {
 
 .status-pill {
   display: inline-flex;
+  align-items: center;
   justify-content: center;
   width: fit-content;
   min-width: 88px;
@@ -427,6 +428,49 @@ button:hover {
   background: #f0fdf4;
   color: #166534;
   font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.status-muted {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+}
+
+.calendar-panel {
+  border-color: #c7d2fe;
+}
+
+.calendar-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.calendar-status-row button {
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.calendar-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 150px 120px 90px 140px minmax(180px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.calendar-description {
+  min-width: 0;
+}
+
+.calendar-result {
+  color: #334155;
+  font-size: 0.875rem;
+}
+
+.calendar-result a {
+  color: #1d4ed8;
   font-weight: 700;
 }
 
@@ -559,6 +603,7 @@ button:hover {
   .metric-grid,
   .form-row,
   .compact-form,
+  .calendar-form,
   .split-grid,
   .application-card,
   .resume-version-row,

@@ -35,6 +35,7 @@ The app helps the user run their job-prep life like a developer team workflow:
 - As a user, I can ask the Codex assistant to generate a daily plan from my current schedule, sprint, applications, study items, and projects.
 - As a user, I can ask the Codex assistant to review my active sprint and suggest a realistic scope adjustment.
 - As a user, I can ask the Codex assistant to suggest next actions for a job application, resume version, or portfolio project.
+- As a user, I can send a confirmed focus block to Google Calendar so it appears on my phone calendar with reminders handled by Google Calendar.
 
 ## MVP Scope
 - First screen: Daily Command Center.
@@ -55,6 +56,7 @@ The app helps the user run their job-prep life like a developer team workflow:
 - State: React state plus API-backed server state
 - Persistence for MVP: PostgreSQL through the Node backend, not browser-only state
 - AI integration: Node backend exposes stable `/api/assistant/*` endpoints and calls Codex server-side
+- Calendar integration: Google Calendar is an external execution/notification layer, not the source of truth for planning data
 - Tests: Vitest for unit tests, Playwright for browser-level checks when UI exists
 - Package manager: npm unless the project later standardizes on another tool
 
@@ -189,6 +191,15 @@ Codex assistance runs server-side and provides higher-level planning:
 - Suggest portfolio project improvements that strengthen employability.
 - Draft resume improvement notes based on user-provided resume metadata and target role notes.
 
+### Google Calendar Handoff
+- The app owns planning data; Google Calendar receives only confirmed time blocks.
+- MVP supports one-way export to Google Calendar through the backend.
+- OAuth credentials live in `.env`; OAuth token state lives in ignored `private/` files.
+- The browser never receives Google access or refresh tokens.
+- Events are created only after the user explicitly submits a time block.
+- The backend uses the narrow Calendar Events scope for creating events.
+- Two-way sync, Calendar webhooks, and automatic AI writes are deferred.
+
 ## AI API Contract
 The frontend should call application-owned endpoints rather than Codex directly.
 
@@ -197,6 +208,10 @@ POST /api/assistant/daily-plan
 POST /api/assistant/sprint-review
 POST /api/assistant/application-review
 POST /api/assistant/project-review
+GET /api/calendar/google/status
+GET /api/calendar/google/auth-url
+GET /api/calendar/google/callback
+POST /api/calendar/google/events
 ```
 
 All assistant endpoints follow this shape:
