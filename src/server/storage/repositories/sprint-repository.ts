@@ -20,9 +20,13 @@ export type CreateWorkItemInput = {
   blocker?: string;
 };
 
+export type PatchWorkItemInput = Partial<CreateWorkItemInput>;
+
 export interface SprintRepository {
   getActiveSprint(): Promise<Sprint | null>;
   createSprint(input: CreateSprintInput): Promise<Sprint>;
   createWorkItem(input: CreateWorkItemInput): Promise<WorkItem>;
   updateWorkItemStatus(id: string, status: WorkItemStatus): Promise<WorkItem>;
+  patchWorkItem(id: string, input: PatchWorkItemInput): Promise<WorkItem>;
+  deleteWorkItem(id: string): Promise<void>;
 }

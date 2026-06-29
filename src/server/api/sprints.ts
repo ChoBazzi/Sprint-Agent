@@ -31,6 +31,20 @@ const updateWorkItemStatusSchema = z.object({
   status: z.enum(["backlog", "planned", "in_progress", "blocked", "done", "skipped"])
 });
 
+const patchWorkItemSchema = z.object({
+  sprintId: z.string().optional(),
+  title: z.string().trim().min(1).optional(),
+  description: z.string().trim().optional(),
+  status: z
+    .enum(["backlog", "planned", "in_progress", "blocked", "done", "skipped"])
+    .optional(),
+  area: z.enum(["personal", "study", "application", "project"]).optional(),
+  dueDate: dateSchema.optional().or(z.literal("")),
+  estimate: z.number().int().positive().optional(),
+  priority: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  blocker: z.string().trim().optional()
+});
+
 export function createSprintRouter(repository: SprintRepository): Router {
   const router = Router();
   const service = createSprintService(repository);
@@ -68,6 +82,28 @@ export function createSprintRouter(repository: SprintRepository): Router {
       const input = updateWorkItemStatusSchema.parse(request.body);
       const workItem = await service.updateWorkItemStatus(request.params.id, input.status);
       response.json({ data: workItem });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/work-items/:id", async (request, response, next) => {
+    try {
+      const input = patchWorkItemSchema.parse(request.body);
+      const workItem = await service.patchWorkItem(request.params.id, {
+        ...input,
+        dueDate: input.dueDate || undefined
+      });
+      response.json({ data: workItem });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete("/work-items/:id", async (request, response, next) => {
+    try {
+      await service.deleteWorkItem(request.params.id);
+      response.status(204).send();
     } catch (error) {
       next(error);
     }

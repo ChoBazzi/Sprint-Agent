@@ -4,6 +4,7 @@ import type { Sprint, WorkArea, WorkItem, WorkItemStatus } from "../../../domain
 import type {
   CreateSprintInput,
   CreateWorkItemInput,
+  PatchWorkItemInput,
   SprintRepository
 } from "./sprint-repository.js";
 
@@ -56,7 +57,7 @@ export class PrismaSprintRepository implements SprintRepository {
         description: input.description,
         status: toPrismaWorkItemStatus(input.status ?? "backlog"),
         area: input.area,
-        dueDate: input.dueDate ? toDate(input.dueDate) : undefined,
+        dueDate: "dueDate" in input ? (input.dueDate ? toDate(input.dueDate) : null) : undefined,
         estimate: input.estimate,
         priority: input.priority,
         blocker: input.blocker
@@ -67,12 +68,30 @@ export class PrismaSprintRepository implements SprintRepository {
   }
 
   async updateWorkItemStatus(id: string, status: WorkItemStatus): Promise<WorkItem> {
+    return this.patchWorkItem(id, { status });
+  }
+
+  async patchWorkItem(id: string, input: PatchWorkItemInput): Promise<WorkItem> {
     const workItem = await this.db.workItem.update({
       where: { id },
-      data: { status: toPrismaWorkItemStatus(status) }
+      data: {
+        sprintId: input.sprintId,
+        title: input.title,
+        description: input.description,
+        status: input.status ? toPrismaWorkItemStatus(input.status) : undefined,
+        area: input.area,
+        dueDate: input.dueDate ? toDate(input.dueDate) : undefined,
+        estimate: input.estimate,
+        priority: input.priority,
+        blocker: input.blocker
+      }
     });
 
     return toWorkItem(workItem);
+  }
+
+  async deleteWorkItem(id: string): Promise<void> {
+    await this.db.workItem.delete({ where: { id } });
   }
 }
 

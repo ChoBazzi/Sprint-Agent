@@ -2,6 +2,7 @@ import type { WorkItemStatus } from "../../domain/sprint.js";
 import type {
   CreateSprintInput,
   CreateWorkItemInput,
+  PatchWorkItemInput,
   SprintRepository
 } from "../storage/repositories/sprint-repository.js";
 
@@ -21,6 +22,14 @@ export function createSprintService(repository: SprintRepository) {
 
     updateWorkItemStatus(id: string, status: WorkItemStatus) {
       return repository.updateWorkItemStatus(id, status);
+    },
+
+    patchWorkItem(id: string, input: PatchWorkItemInput) {
+      return repository.patchWorkItem(id, input);
+    },
+
+    deleteWorkItem(id: string) {
+      return repository.deleteWorkItem(id);
     }
   };
 }

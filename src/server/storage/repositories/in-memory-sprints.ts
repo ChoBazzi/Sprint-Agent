@@ -2,6 +2,7 @@ import type { Sprint, WorkItem, WorkItemStatus } from "../../../domain/sprint.js
 import type {
   CreateSprintInput,
   CreateWorkItemInput,
+  PatchWorkItemInput,
   SprintRepository
 } from "./sprint-repository.js";
 
@@ -53,15 +54,23 @@ export class InMemorySprintRepository implements SprintRepository {
   }
 
   async updateWorkItemStatus(id: string, status: WorkItemStatus): Promise<WorkItem> {
+    return this.patchWorkItem(id, { status });
+  }
+
+  async patchWorkItem(id: string, input: PatchWorkItemInput): Promise<WorkItem> {
     const workItem = this.workItems.get(id);
 
     if (!workItem) {
       throw new Error(`Work item not found: ${id}`);
     }
 
-    const updated = { ...workItem, status };
+    const updated: WorkItem = { ...workItem, ...input };
     this.workItems.set(id, updated);
     return updated;
+  }
+
+  async deleteWorkItem(id: string): Promise<void> {
+    this.workItems.delete(id);
   }
 
   private withWorkItems(sprint: Sprint): Sprint {

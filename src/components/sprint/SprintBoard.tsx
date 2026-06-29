@@ -1,5 +1,6 @@
-import { useState } from "react";
-import type { Sprint, WorkArea, WorkItemStatus } from "../../domain/sprint";
+import { useEffect, useState } from "react";
+import type { Sprint, WorkArea, WorkItem, WorkItemStatus } from "../../domain/sprint";
+import type { PatchWorkItemPayload } from "../../storage/api-client";
 
 type SprintBoardProps = {
   sprint: Sprint | null;
@@ -17,6 +18,8 @@ type SprintBoardProps = {
     status: WorkItemStatus;
   }) => Promise<void>;
   onMoveWorkItem: (id: string, status: WorkItemStatus) => Promise<void>;
+  onPatchWorkItem: (id: string, input: PatchWorkItemPayload) => Promise<void>;
+  onDeleteWorkItem: (id: string) => Promise<void>;
 };
 
 const statuses: Array<{ value: WorkItemStatus; label: string }> = [
@@ -32,7 +35,9 @@ export function SprintBoard({
   sprint,
   onCreateSprint,
   onCreateWorkItem,
-  onMoveWorkItem
+  onMoveWorkItem,
+  onPatchWorkItem,
+  onDeleteWorkItem
 }: SprintBoardProps) {
   return (
     <section className="section-stack" aria-labelledby="sprint-title">
@@ -55,23 +60,13 @@ export function SprintBoard({
                   {sprint.workItems
                     .filter((item) => item.status === status.value)
                     .map((item) => (
-                      <article className="task-card" key={item.id}>
-                        <strong>{item.title}</strong>
-                        <span>{item.area}</span>
-                        <select
-                          aria-label={`${item.title} 상태 변경`}
-                          value={item.status}
-                          onChange={(event) =>
-                            void onMoveWorkItem(item.id, event.target.value as WorkItemStatus)
-                          }
-                        >
-                          {statuses.map((option) => (
-                            <option value={option.value} key={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </article>
+                      <WorkItemCard
+                        item={item}
+                        onMoveWorkItem={onMoveWorkItem}
+                        onPatchWorkItem={onPatchWorkItem}
+                        onDeleteWorkItem={onDeleteWorkItem}
+                        key={item.id}
+                      />
                     ))}
                   {sprint.workItems.filter((item) => item.status === status.value).length === 0 ? (
                     <p className="empty-column">비어 있음</p>
@@ -85,6 +80,111 @@ export function SprintBoard({
         <SprintForm onSubmit={onCreateSprint} />
       )}
     </section>
+  );
+}
+
+type WorkItemCardProps = {
+  item: WorkItem;
+  onMoveWorkItem: SprintBoardProps["onMoveWorkItem"];
+  onPatchWorkItem: SprintBoardProps["onPatchWorkItem"];
+  onDeleteWorkItem: SprintBoardProps["onDeleteWorkItem"];
+};
+
+function WorkItemCard({
+  item,
+  onMoveWorkItem,
+  onPatchWorkItem,
+  onDeleteWorkItem
+}: WorkItemCardProps) {
+  const [draft, setDraft] = useState({
+    title: item.title,
+    priority: item.priority,
+    dueDate: item.dueDate ?? ""
+  });
+  useEffect(() => {
+    setDraft({
+      title: item.title,
+      priority: item.priority,
+      dueDate: item.dueDate ?? ""
+    });
+  }, [item.title, item.priority, item.dueDate]);
+  const hasChanges =
+    draft.title !== item.title ||
+    draft.priority !== item.priority ||
+    draft.dueDate !== (item.dueDate ?? "");
+
+  return (
+    <article className="task-card">
+      <label>
+        작업명
+        <input
+          value={draft.title}
+          onChange={(event) =>
+            setDraft((current) => ({ ...current, title: event.target.value }))
+          }
+        />
+      </label>
+      <span>{item.area}</span>
+      <select
+        aria-label={`${item.title} 상태 변경`}
+        value={item.status}
+        onChange={(event) =>
+          void onMoveWorkItem(item.id, event.target.value as WorkItemStatus)
+        }
+      >
+        {statuses.map((option) => (
+          <option value={option.value} key={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <div className="task-card-controls">
+        <label>
+          마감
+          <input
+            type="date"
+            value={draft.dueDate}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, dueDate: event.target.value }))
+            }
+          />
+        </label>
+        <label>
+          우선순위
+          <select
+            value={draft.priority}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                priority: Number(event.target.value) as 1 | 2 | 3
+              }))
+            }
+          >
+            <option value={1}>Low</option>
+            <option value={2}>Medium</option>
+            <option value={3}>High</option>
+          </select>
+        </label>
+      </div>
+      <div className="task-card-actions">
+        <button
+          type="button"
+          disabled={!hasChanges || !draft.title.trim()}
+          onClick={() =>
+            void onPatchWorkItem(item.id, {
+              title: draft.title,
+              priority: draft.priority,
+              dueDate: draft.dueDate
+            })
+          }
+        >
+          저장
+        </button>
+        <button type="button" className="button-secondary" onClick={() => void onDeleteWorkItem(item.id)}>
+          삭제
+        </button>
+      </div>
+    </article>
   );
 }
 

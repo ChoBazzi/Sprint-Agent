@@ -62,4 +62,37 @@ describe("SprintService", () => {
 
     expect(updated.status).toBe("in_progress");
   });
+
+  it("patches and deletes work items", async () => {
+    const service = createSprintService(new InMemorySprintRepository());
+    const sprint = await service.createSprint({
+      name: "Sprint",
+      goal: "MVP 만들기",
+      startsOn: "2026-06-24",
+      endsOn: "2026-06-30"
+    });
+    const workItem = await service.createWorkItem({
+      sprintId: sprint.id,
+      title: "초기 작업명",
+      area: "project",
+      priority: 1,
+      status: "planned"
+    });
+
+    const patched = await service.patchWorkItem(workItem.id, {
+      title: "수정된 작업명",
+      priority: 3,
+      dueDate: "2026-06-29"
+    });
+    await service.deleteWorkItem(workItem.id);
+    const activeSprint = await service.getActiveSprint();
+
+    expect(patched).toMatchObject({
+      id: workItem.id,
+      title: "수정된 작업명",
+      priority: 3,
+      dueDate: "2026-06-29"
+    });
+    expect(activeSprint?.workItems).toHaveLength(0);
+  });
 });
