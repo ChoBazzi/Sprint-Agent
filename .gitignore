@@ -2,6 +2,37 @@ node_modules/
 dist/
 dist-server/
 .env
+.env.*
+!.env.example
 .DS_Store
 coverage/
 *.log
+test-results/
+playwright-report/
+
+# Local database/data artifacts
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.sql
+!prisma/migrations/**/*.sql
+data/
+local-data/
+backups/
+uploads/
+private/
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+auth.json
+.codex/auth.json
+secrets/
+
+# Local IDE/OS state
+.idea/
+.vscode/
