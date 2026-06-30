@@ -32,6 +32,12 @@
   - Optional `AI_ASSISTANT_MODE=codex` calls local `codex exec` in read-only mode.
   - Browser never receives Codex credentials.
   - Assistant suggestions do not mutate user data.
+- Conversational assistant:
+  - Stores assistant conversations and messages in PostgreSQL.
+  - Project-scoped `.codex/config.toml` exposes the `personal_calendar` MCP server to Codex.
+  - MCP tools create tracked calendar action drafts.
+  - Calendar actions move through `proposed`, `approved`, `applied`, `rejected`, and `failed` states.
+  - User approval is required before a calendar action can be applied.
 - Google Calendar handoff:
   - App remains the source of truth for study, sprint, project, and personal planning.
   - Google Calendar is an optional external reflection layer for confirmed time blocks.
@@ -47,14 +53,15 @@
   - Seeded dashboard data renders.
   - Sprint work items can be created, edited, and deleted.
   - Detailed application/resume tracker is absent from the main screen.
-  - Study/project creation and assistant daily-plan request work end to end.
+  - Study/project creation and assistant chat request work end to end.
 - README quick-start and command documentation.
 
 ## Verification
-- `npm run test` passed: 10 files, 35 tests.
+- `npm run test` passed: 11 files, 37 tests.
 - `npm run build` passed.
 - `npm run lint` passed.
 - `npm run test:e2e` passed: 3 Playwright tests.
+- Codex MCP smoke test created a tracked calendar event draft through `personal_calendar`.
 - `npm run db:up` started PostgreSQL and the container reported healthy.
 - `npx prisma migrate status` reported the database schema is up to date.
 - `npm run db:seed` completed successfully.

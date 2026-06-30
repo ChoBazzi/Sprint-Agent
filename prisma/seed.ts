@@ -14,6 +14,10 @@ async function main() {
   const inFourDays = addDays(today, 4);
   const nextWeek = addDays(today, 7);
 
+  await prisma.assistantMessage.deleteMany();
+  await prisma.assistantAction.deleteMany();
+  await prisma.assistantConversation.deleteMany();
+  await prisma.calendarEventLink.deleteMany();
   await prisma.workItem.deleteMany({
     where: { title: { startsWith: "E2E " } }
   });

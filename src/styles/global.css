@@ -481,43 +481,99 @@ button:hover {
   padding: 7px 10px;
 }
 
-.assistant-result {
+.assistant-chat-layout {
   display: grid;
-  gap: 14px;
-}
-
-.suggestion-list {
-  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 0.72fr);
   gap: 12px;
+  align-items: start;
 }
 
-.suggestion-card {
+.assistant-thread,
+.assistant-action-rail {
   display: grid;
-  gap: 8px;
-  padding: 14px;
+  gap: 10px;
+  align-content: start;
+}
+
+.assistant-thread {
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.message-bubble {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 620px);
+  padding: 12px;
   border: 1px solid #dbe3ef;
   border-radius: 8px;
   background: #f8fafc;
 }
 
-.suggestion-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.message-user {
+  justify-self: end;
+  border-color: #bfdbfe;
+  background: #eff6ff;
 }
 
-.suggestion-title span {
+.message-bubble span {
   color: #2563eb;
   font-size: 0.8125rem;
   font-weight: 700;
-  text-transform: uppercase;
 }
 
-.suggestion-card ul {
-  margin: 0;
-  padding-left: 20px;
+.message-bubble p {
   color: #334155;
+  white-space: pre-wrap;
+}
+
+.assistant-action-list,
+.assistant-action-card {
+  display: grid;
+  gap: 10px;
+}
+
+.assistant-action-card {
+  padding: 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.assistant-action-card div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.assistant-action-card strong {
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.assistant-action-card span {
+  color: #2563eb;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.assistant-action-card p {
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.assistant-action-buttons,
+.assistant-compose {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.assistant-compose {
+  grid-template-columns: minmax(260px, 1fr) auto;
+  align-items: end;
 }
 
 .assistant-warning {
@@ -536,6 +592,9 @@ button:hover {
   .compact-form,
   .calendar-form,
   .execution-grid,
+  .assistant-chat-layout,
+  .assistant-compose,
+  .assistant-action-buttons,
   .dense-row,
   .project-grid,
   .project-card-header {

@@ -69,5 +69,6 @@ test("creates study and project items, then requests an assistant plan", async (
   await expect(projectSection.getByText(project)).toBeVisible();
 
   await page.getByRole("button", { name: "오늘 계획" }).click();
-  await expect(page.locator(".assistant-result")).toBeVisible();
+  await expect(page.getByText("지금은 stub 모드라 실제 Codex MCP 도구를 호출하지 않았습니다.")).toBeVisible();
+  await expect(page.getByLabel("Assistant tracked actions")).toBeVisible();
 });

@@ -192,6 +192,34 @@ export class GoogleCalendarService {
     };
   }
 
+  async deleteEvent(input: { eventId: string }): Promise<void> {
+    this.assertConfigured();
+    const token = await this.getUsableToken();
+    const response = await this.fetchImpl(
+      `${GOOGLE_CALENDAR_API_URL}/calendars/${encodeURIComponent(this.config.calendarId)}/events/${encodeURIComponent(input.eventId)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token.accessToken}`
+        }
+      }
+    );
+
+    if (!response.ok && response.status !== 404 && response.status !== 410) {
+      let payload: unknown = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+      throw new CalendarIntegrationError(
+        "GOOGLE_CALENDAR_EVENT_DELETE_FAILED",
+        extractGoogleErrorMessage(payload),
+        response.status
+      );
+    }
+  }
+
   private isConfigured(): boolean {
     return Boolean(this.config.clientId && this.config.clientSecret);
   }

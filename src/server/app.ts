@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-import { createAssistantRouter } from "./api/assistant.js";
+import { createAssistantRouter, toAssistantApiError } from "./api/assistant.js";
 import { createApplicationRouter } from "./api/applications.js";
 import { createCalendarRouter, toCalendarApiError } from "./api/calendar.js";
 import { createProjectRouter } from "./api/projects.js";
@@ -11,6 +11,7 @@ import { PrismaProjectRepository } from "./storage/repositories/prisma-projects.
 import { PrismaSprintRepository } from "./storage/repositories/prisma-sprints.js";
 import { PrismaStudyRepository } from "./storage/repositories/prisma-study.js";
 import { prisma } from "./storage/prisma.js";
+import { AssistantActionService } from "./assistant/action-service.js";
 
 export function createApp() {
   const app = express();
@@ -26,6 +27,7 @@ export function createApp() {
   const applicationRepository = new PrismaApplicationRepository(prisma);
   const studyRepository = new PrismaStudyRepository(prisma);
   const projectRepository = new PrismaProjectRepository(prisma);
+  const actionService = new AssistantActionService(prisma);
 
   app.use("/api", createSprintRouter(sprintRepository));
   app.use("/api", createApplicationRouter(applicationRepository));
@@ -34,11 +36,17 @@ export function createApp() {
   app.use("/api", createCalendarRouter());
   app.use(
     "/api",
-    createAssistantRouter(sprintRepository, applicationRepository, studyRepository, projectRepository)
+    createAssistantRouter(
+      sprintRepository,
+      applicationRepository,
+      studyRepository,
+      projectRepository,
+      actionService
+    )
   );
 
   app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
-    const apiError = toCalendarApiError(error) ?? toApiError(error);
+    const apiError = toAssistantApiError(error) ?? toCalendarApiError(error) ?? toApiError(error);
     response.status(apiError.status).json(apiError.body);
   });
 

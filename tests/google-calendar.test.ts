@@ -119,6 +119,35 @@ describe("GoogleCalendarService", () => {
       htmlLink: "https://calendar.google.com/event?eid=event-1"
     });
   });
+
+  it("deletes a Google Calendar event by event id", async () => {
+    const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+    const tokenStore = new MemoryGoogleTokenStore({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      expiresAt: Date.now() + 3600 * 1000
+    });
+    const service = new GoogleCalendarService({
+      config: makeConfig({ calendarId: "primary" }),
+      tokenStore,
+      fetch: async (input, init) => {
+        calls.push({ input, init });
+        return new Response(null, { status: 204 });
+      }
+    });
+
+    await service.deleteEvent({ eventId: "event-1" });
+
+    expect(String(calls[0].input)).toBe(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events/event-1"
+    );
+    expect(calls[0].init).toMatchObject({
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer access-token"
+      }
+    });
+  });
 });
 
 class MemoryGoogleTokenStore implements GoogleTokenStore {

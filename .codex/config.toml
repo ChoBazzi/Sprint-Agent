@@ -1,0 +1,8 @@
+[mcp_servers.personal_calendar]
+command = "npm"
+args = ["run", "mcp:calendar", "--silent"]
+cwd = "/Users/bazzi/dev/project/agent"
+startup_timeout_sec = 15
+tool_timeout_sec = 60
+enabled = true
+default_tools_approval_mode = "approve"

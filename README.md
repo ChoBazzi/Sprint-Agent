@@ -30,6 +30,7 @@ npm run dev
 | `npm run db:backup` | `backups/`에 PostgreSQL custom dump 생성 |
 | `npm run db:restore -- backups/<file>.dump` | dump 파일에서 PostgreSQL 복구 |
 | `npm run db:studio` | Prisma Studio 실행 |
+| `npm run mcp:calendar` | Codex가 사용하는 로컬 Calendar MCP 서버 실행 |
 
 ## Architecture
 
@@ -39,6 +40,7 @@ npm run dev
 - ORM/migrations: Prisma
 - Tests: Vitest and Playwright
 - AI assistant: server-side adapter around local `codex exec`
+- MCP tools: project-scoped Calendar MCP server in `.codex/config.toml`
 - Calendar: optional Google Calendar handoff through server-side OAuth
 
 The browser calls application-owned endpoints only. Codex credentials and local auth state stay outside the repository and are never sent to the frontend.
@@ -52,7 +54,7 @@ Implemented MVP workflows:
 - Job follow-up signals in the command center; detailed application/resume management is no longer part of the main screen.
 - Study planner with progress, target dates, review dates, and statuses.
 - Portfolio project tracker with next actions and readiness flags.
-- Assistant endpoints for daily plan, sprint review, application review, and project review.
+- Conversational assistant with stored messages and tracked calendar action drafts.
 - Google Calendar handoff for confirmed focus blocks.
 
 Deferred by design:
@@ -78,7 +80,17 @@ AI_ASSISTANT_MODE=codex
 CODEX_ASSISTANT_TIMEOUT_MS=60000
 ```
 
-The backend calls `codex exec` in read-only mode and expects structured JSON. If Codex fails, the API falls back to the local deterministic assistant and includes a warning.
+The backend calls `codex exec` in read-only mode. Legacy review endpoints expect structured JSON; the conversational assistant stores plain-text replies and tracked action drafts. If Codex is disabled, the chat UI returns a local stub response.
+
+Codex also sees the project-scoped `personal_calendar` MCP server. Calendar writes are tracked as assistant actions first:
+
+```text
+proposed -> approved -> applied
+proposed -> rejected
+approved -> failed
+```
+
+The web UI must approve an action before it can be applied.
 
 ## Google Calendar
 
@@ -105,6 +117,7 @@ This repository is safe to publish only when it contains code and sample data. D
 ## Docs
 
 - [MVP spec](docs/specs/developer-assistant-webapp.md)
+- [Codex MCP calendar assistant spec](docs/specs/codex-mcp-calendar-assistant.md)
 - [Implementation plan](docs/plans/developer-assistant-mvp-plan.md)
 - [Current status](docs/status/mvp-status-2026-06-29.md)
 - [Git and data boundary](docs/security/git-data-boundary.md)

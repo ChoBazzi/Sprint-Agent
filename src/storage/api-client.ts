@@ -1,5 +1,11 @@
 import type { AssistantResponse, DailyPlanRequest } from "../domain/assistant";
 import type {
+  AssistantAction,
+  AssistantChatResponse,
+  AssistantConversation,
+  AssistantConversationDetail
+} from "../domain/assistant-chat";
+import type {
   CalendarEventDraft,
   CalendarExportResult,
   CalendarProviderStatus
@@ -118,6 +124,11 @@ export type PatchProjectPayload = {
 };
 
 export type CreateCalendarEventPayload = CalendarEventDraft;
+
+export type SendAssistantMessagePayload = {
+  title?: string;
+  content: string;
+};
 
 export async function getActiveSprint(): Promise<Sprint | null> {
   const result = await request<ApiResult<Sprint | null>>("/api/sprints/active");
@@ -300,6 +311,63 @@ export async function createProjectReview(userInstruction?: string): Promise<Ass
   const result = await request<ApiResult<AssistantResponse>>("/api/assistant/project-review", {
     method: "POST",
     body: JSON.stringify({ userInstruction })
+  });
+  return result.data;
+}
+
+export async function listAssistantConversations(): Promise<AssistantConversation[]> {
+  const result = await request<ApiResult<AssistantConversation[]>>("/api/assistant/conversations");
+  return result.data;
+}
+
+export async function createAssistantConversation(title?: string): Promise<AssistantConversation> {
+  const result = await request<ApiResult<AssistantConversation>>("/api/assistant/conversations", {
+    method: "POST",
+    body: JSON.stringify({ title })
+  });
+  return result.data;
+}
+
+export async function getAssistantConversation(
+  id: string
+): Promise<AssistantConversationDetail> {
+  const result = await request<ApiResult<AssistantConversationDetail>>(
+    `/api/assistant/conversations/${id}`
+  );
+  return result.data;
+}
+
+export async function sendAssistantMessage(
+  conversationId: string,
+  payload: SendAssistantMessagePayload
+): Promise<AssistantChatResponse> {
+  const result = await request<ApiResult<AssistantChatResponse>>(
+    `/api/assistant/conversations/${conversationId}/messages`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }
+  );
+  return result.data;
+}
+
+export async function approveAssistantAction(id: string): Promise<AssistantAction> {
+  const result = await request<ApiResult<AssistantAction>>(`/api/assistant/actions/${id}/approve`, {
+    method: "PATCH"
+  });
+  return result.data;
+}
+
+export async function rejectAssistantAction(id: string): Promise<AssistantAction> {
+  const result = await request<ApiResult<AssistantAction>>(`/api/assistant/actions/${id}/reject`, {
+    method: "PATCH"
+  });
+  return result.data;
+}
+
+export async function applyAssistantAction(id: string): Promise<AssistantAction> {
+  const result = await request<ApiResult<AssistantAction>>(`/api/assistant/actions/${id}/apply`, {
+    method: "POST"
   });
   return result.data;
 }

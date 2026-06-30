@@ -1,5 +1,11 @@
 import { Router } from "express";
+import { z } from "zod";
 import type { AssistantResponse } from "../../domain/assistant.js";
+import {
+  AssistantActionError,
+  AssistantActionService
+} from "../assistant/action-service.js";
+import { runAssistantChat } from "../assistant/chat-runner.js";
 import { createCodexDailyPlan } from "../assistant/codex-assistant.js";
 import { createStubDailyPlan, type DailyPlanContext } from "../assistant/prompt-builders.js";
 import {
@@ -15,9 +21,102 @@ export function createAssistantRouter(
   sprintRepository: SprintRepository,
   applicationRepository: ApplicationRepository,
   studyRepository: StudyRepository,
-  projectRepository: ProjectRepository
+  projectRepository: ProjectRepository,
+  actionService: AssistantActionService
 ): Router {
   const router = Router();
+
+  router.get("/assistant/conversations", async (_request, response, next) => {
+    try {
+      response.json({ data: await actionService.listConversations() });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/assistant/conversations", async (request, response, next) => {
+    try {
+      const input = createConversationSchema.parse(request.body);
+      response.status(201).json({ data: await actionService.createConversation(input) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get("/assistant/conversations/:id", async (request, response, next) => {
+    try {
+      response.json({ data: await actionService.getConversationDetail(request.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/assistant/conversations/:id/messages", async (request, response, next) => {
+    try {
+      const input = sendMessageSchema.parse(request.body);
+      const conversation = await actionService.ensureConversation(request.params.id, input.title);
+      const beforeDetail = await actionService.getConversationDetail(conversation.id);
+      const userMessage = await actionService.addMessage({
+        conversationId: conversation.id,
+        role: "user",
+        content: input.content
+      });
+      const context = await loadDailyPlanContext({
+        sprintRepository,
+        applicationRepository,
+        studyRepository,
+        projectRepository,
+        date: todayDateOnly(),
+        userInstruction: input.content
+      });
+
+      const assistantText = await runAssistantChat({
+        conversationId: conversation.id,
+        userMessage: input.content,
+        history: [...beforeDetail.messages, userMessage],
+        context
+      });
+      const assistantMessage = await actionService.addMessage({
+        conversationId: conversation.id,
+        role: "assistant",
+        content: assistantText
+      });
+      const detail = await actionService.getConversationDetail(conversation.id);
+
+      response.status(201).json({
+        data: {
+          ...detail,
+          assistantMessage
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/assistant/actions/:id/approve", async (request, response, next) => {
+    try {
+      response.json({ data: await actionService.approveAction(request.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/assistant/actions/:id/reject", async (request, response, next) => {
+    try {
+      response.json({ data: await actionService.rejectAction(request.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/assistant/actions/:id/apply", async (request, response, next) => {
+    try {
+      response.json({ data: await actionService.applyAction(request.params.id) });
+    } catch (error) {
+      next(error);
+    }
+  });
 
   router.post("/assistant/daily-plan", async (request, response, next) => {
     try {
@@ -99,6 +198,15 @@ export function createAssistantRouter(
   return router;
 }
 
+const createConversationSchema = z.object({
+  title: z.string().trim().min(1).optional()
+});
+
+const sendMessageSchema = z.object({
+  title: z.string().trim().min(1).optional(),
+  content: z.string().trim().min(1).max(4000)
+});
+
 type LoadContextInput = {
   sprintRepository: SprintRepository;
   applicationRepository: ApplicationRepository;
@@ -153,4 +261,20 @@ function formatError(error: unknown): string {
 
 function todayDateOnly(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+export function toAssistantApiError(error: unknown) {
+  if (error instanceof AssistantActionError) {
+    return {
+      status: error.status,
+      body: {
+        error: {
+          code: error.code,
+          message: error.message
+        }
+      }
+    };
+  }
+
+  return null;
 }

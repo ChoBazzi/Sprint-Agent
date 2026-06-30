@@ -17,9 +17,11 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:backup": "bash scripts/backup-postgres.sh",
     "db:restore": "bash scripts/restore-postgres.sh",
+    "mcp:calendar": "tsx src/mcp/calendar-server.ts",
     "test:e2e": "npm run db:seed && playwright test"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@prisma/client": "^6.10.1",
     "@vitejs/plugin-react": "^4.3.4",
     "cors": "^2.8.5",

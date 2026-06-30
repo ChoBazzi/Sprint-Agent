@@ -5,31 +5,35 @@ import { DailyCommandCenter } from "../components/dashboard/DailyCommandCenter";
 import { ProjectTracker } from "../components/projects/ProjectTracker";
 import { SprintBoard } from "../components/sprint/SprintBoard";
 import { StudyPlanner } from "../components/study/StudyPlanner";
-import type { AssistantResponse } from "../domain/assistant";
+import type { AssistantConversationDetail } from "../domain/assistant-chat";
 import type { CalendarExportResult, CalendarProviderStatus } from "../domain/calendar";
 import type { JobApplication } from "../domain/applications";
 import type { PortfolioProject } from "../domain/projects";
 import type { StudyItem } from "../domain/study";
 import type { Sprint, WorkItemStatus } from "../domain/sprint";
 import {
-  createDailyPlan,
+  applyAssistantAction,
+  approveAssistantAction,
+  createAssistantConversation,
   createGoogleCalendarEvent,
   createProject,
-  createProjectReview,
-  createSprintReview,
   createSprint,
   createStudyItem,
   createWorkItem,
   deleteWorkItem,
   getActiveSprint,
+  getAssistantConversation,
   getGoogleCalendarAuthUrl,
   getGoogleCalendarStatus,
   listJobApplications,
+  listAssistantConversations,
   listProjects,
   listStudyItems,
   patchProject,
   patchStudyItem,
   patchWorkItem,
+  rejectAssistantAction,
+  sendAssistantMessage,
   updateWorkItemStatus,
   type CreateCalendarEventPayload,
   type CreateProjectPayload,
@@ -49,7 +53,7 @@ export function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
-  const [assistantResponse, setAssistantResponse] = useState<AssistantResponse | null>(null);
+  const [assistantDetail, setAssistantDetail] = useState<AssistantConversationDetail | null>(null);
   const [calendarStatus, setCalendarStatus] = useState<CalendarProviderStatus | null>(null);
   const [calendarResult, setCalendarResult] = useState<CalendarExportResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +95,25 @@ export function App() {
   useEffect(() => {
     void refreshCalendarStatus();
   }, [refreshCalendarStatus]);
+
+  const refreshAssistantConversation = useCallback(async (conversationId: string) => {
+    setAssistantDetail(await getAssistantConversation(conversationId));
+  }, []);
+
+  useEffect(() => {
+    async function loadLatestConversation() {
+      try {
+        const conversations = await listAssistantConversations();
+        if (conversations[0]) {
+          setAssistantDetail(await getAssistantConversation(conversations[0].id));
+        }
+      } catch {
+        setAssistantDetail(null);
+      }
+    }
+
+    void loadLatestConversation();
+  }, []);
 
   async function handleCreateSprint(input: CreateSprintPayload) {
     setError(null);
@@ -185,22 +208,6 @@ export function App() {
     }
   }
 
-  async function handleRequestDailyPlan() {
-    await requestAssistantResponse(() =>
-      createDailyPlan({
-        date: new Date().toISOString().slice(0, 10)
-      })
-    );
-  }
-
-  async function handleRequestSprintReview() {
-    await requestAssistantResponse(() => createSprintReview());
-  }
-
-  async function handleRequestProjectReview() {
-    await requestAssistantResponse(() => createProjectReview());
-  }
-
   async function handleConnectGoogleCalendar() {
     setIsCalendarLoading(true);
     setError(null);
@@ -227,14 +234,51 @@ export function App() {
     }
   }
 
-  async function requestAssistantResponse(request: () => Promise<AssistantResponse>) {
+  async function handleSendAssistantMessage(content: string) {
     setIsAssistantLoading(true);
     setError(null);
 
     try {
-      setAssistantResponse(await request());
+      const conversation =
+        assistantDetail?.conversation ?? (await createAssistantConversation(content.slice(0, 48)));
+      const response = await sendAssistantMessage(conversation.id, { content });
+      setAssistantDetail({
+        conversation: response.conversation,
+        messages: response.messages,
+        actions: response.actions
+      });
     } catch {
-      setError("Assistant 제안 생성에 실패했습니다.");
+      setError("Assistant 메시지 처리에 실패했습니다.");
+    } finally {
+      setIsAssistantLoading(false);
+    }
+  }
+
+  async function handleApproveAssistantAction(id: string) {
+    await updateAssistantAction(() => approveAssistantAction(id));
+  }
+
+  async function handleRejectAssistantAction(id: string) {
+    await updateAssistantAction(() => rejectAssistantAction(id));
+  }
+
+  async function handleApplyAssistantAction(id: string) {
+    await updateAssistantAction(() => applyAssistantAction(id));
+    await refreshCalendarStatus();
+  }
+
+  async function updateAssistantAction(action: () => Promise<unknown>) {
+    if (!assistantDetail) {
+      return;
+    }
+
+    setIsAssistantLoading(true);
+    setError(null);
+    try {
+      await action();
+      await refreshAssistantConversation(assistantDetail.conversation.id);
+    } catch {
+      setError("Assistant 작업 상태 변경에 실패했습니다.");
     } finally {
       setIsAssistantLoading(false);
     }
@@ -253,11 +297,12 @@ export function App() {
       />
       <div className="execution-grid">
         <AssistantPanel
-          response={assistantResponse}
+          detail={assistantDetail}
           isLoading={isAssistantLoading}
-          onRequestPlan={handleRequestDailyPlan}
-          onRequestSprintReview={handleRequestSprintReview}
-          onRequestProjectReview={handleRequestProjectReview}
+          onSendMessage={handleSendAssistantMessage}
+          onApproveAction={handleApproveAssistantAction}
+          onRejectAction={handleRejectAssistantAction}
+          onApplyAction={handleApplyAssistantAction}
         />
         <CalendarHandoffPanel
           status={calendarStatus}
