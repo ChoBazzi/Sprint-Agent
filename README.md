@@ -49,7 +49,7 @@ Implemented MVP workflows:
 
 - Daily Command Center for today's focus and planning alerts.
 - Sprint board with create, edit, move, and delete for work items.
-- Application tracker with deadlines, statuses, next actions, and resume versions.
+- Job follow-up signals in the command center; detailed application/resume management is no longer part of the main screen.
 - Study planner with progress, target dates, review dates, and statuses.
 - Portfolio project tracker with next actions and readiness flags.
 - Assistant endpoints for daily plan, sprint review, application review, and project review.

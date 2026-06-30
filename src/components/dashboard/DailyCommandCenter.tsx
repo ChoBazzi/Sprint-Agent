@@ -33,6 +33,10 @@ export function DailyCommandCenter({
     : [];
   const dueApplications = getDueSoonApplications(applications, today, 3);
   const missingNextActionApplications = getApplicationsMissingNextAction(applications);
+  const jobFollowUpCount = new Set([
+    ...dueApplications.map((application) => application.id),
+    ...missingNextActionApplications.map((application) => application.id)
+  ]).size;
   const dueStudyItems = getDueStudyItems(studyItems, today, 3);
   const portfolioGaps = getPortfolioGaps(projects);
   const blockedCount = sprint?.workItems.filter((item) => item.status === "blocked").length ?? 0;
@@ -43,11 +47,11 @@ export function DailyCommandCenter({
   return (
     <section className="command-center" aria-labelledby="page-title">
       <div>
-        <div className="page-kicker">Developer Job Prep</div>
+        <div className="page-kicker">AI Schedule Assistant</div>
         <h1 id="page-title">오늘의 커맨드 센터</h1>
         <p className="page-summary">
-          Sprint, 지원 마감, 다음 액션을 기준으로 오늘 집중할 일을 정리합니다. Codex 계획
-          생성은 이 데이터 위에서 검토용 제안을 만듭니다.
+          공부, 프로젝트, 지원 후속 행동을 한 곳에서 정리하고 확정한 시간만 캘린더로 보냅니다.
+          AI 제안은 계획을 바꾸지 않고 검토용으로만 생성됩니다.
         </p>
       </div>
 
@@ -63,12 +67,12 @@ export function DailyCommandCenter({
 
       <div className="metric-grid" aria-busy={isLoading}>
         <article className="metric">
-          <span className="metric-label">Active Sprint</span>
+          <span className="metric-label">Focus Sprint</span>
           <strong>{sprint?.name ?? "없음"}</strong>
           <span>{sprint?.goal ?? "새 Sprint를 만들어 시작하세요."}</span>
         </article>
         <article className="metric">
-          <span className="metric-label">Planned / In Progress</span>
+          <span className="metric-label">Today Work</span>
           <strong>{activeCount}</strong>
           <span>오늘 이어갈 수 있는 작업</span>
         </article>
@@ -78,22 +82,17 @@ export function DailyCommandCenter({
           <span>먼저 풀어야 하는 작업</span>
         </article>
         <article className="metric">
-          <span className="metric-label">Due Applications</span>
-          <strong>{dueApplications.length}</strong>
-          <span>3일 안에 마감되는 지원건</span>
-        </article>
-        <article className="metric">
-          <span className="metric-label">Missing Next Action</span>
-          <strong>{missingNextActionApplications.length}</strong>
-          <span>다음 행동이 비어 있는 지원건</span>
-        </article>
-        <article className="metric">
           <span className="metric-label">Study Targets</span>
           <strong>{dueStudyItems.length}</strong>
           <span>3일 안에 목표일인 공부</span>
         </article>
         <article className="metric">
-          <span className="metric-label">Portfolio Gaps</span>
+          <span className="metric-label">Job Follow-ups</span>
+          <strong>{jobFollowUpCount}</strong>
+          <span>마감 또는 다음 행동 확인 필요</span>
+        </article>
+        <article className="metric">
+          <span className="metric-label">Project Gaps</span>
           <strong>{portfolioGaps.length}</strong>
           <span>README, 배포, 테스트 등 보강 필요</span>
         </article>
@@ -101,7 +100,7 @@ export function DailyCommandCenter({
 
       <article className="panel">
         <div className="panel-header">
-          <h2>Today Focus</h2>
+          <h2>오늘 실행 후보</h2>
           <span className="subtle">{recommendations.length} items</span>
         </div>
         {recommendations.length > 0 ? (
@@ -120,7 +119,7 @@ export function DailyCommandCenter({
 
       <article className="panel">
         <div className="panel-header">
-          <h2>Planning Alerts</h2>
+          <h2>계획 알림</h2>
           <span className="subtle">
             {dueApplications.length +
               missingNextActionApplications.length +
@@ -163,7 +162,7 @@ export function DailyCommandCenter({
             ))}
           </ol>
         ) : (
-          <p className="empty-copy">지원, 공부, 포트폴리오 상태가 안정적입니다.</p>
+          <p className="empty-copy">공부, 프로젝트, 지원 후속 행동이 안정적입니다.</p>
         )}
       </article>
     </section>

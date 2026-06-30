@@ -10,12 +10,10 @@
 - Sprint management:
   - Create active sprint.
   - Create, patch, move, and delete work items.
-- Job application management:
-  - Create, list, filter, and patch applications.
-  - Track status, deadline, next action, resume version, notes, and posting URL metadata.
-- Resume version management:
-  - Create, list, and patch resume version metadata.
-  - Metadata only; resume file upload is intentionally deferred.
+- Job application support:
+  - Backend can create, list, filter, and patch applications.
+  - Main UI now surfaces job follow-up signals through the command center instead of a detailed tracker.
+  - Resume metadata APIs remain available, but resume management is removed from the main UX.
 - Study planning:
   - Create, list, and patch study items.
   - Track status, target date, progress, estimated hours, and review date.
@@ -48,7 +46,7 @@
 - Browser E2E checks:
   - Seeded dashboard data renders.
   - Sprint work items can be created, edited, and deleted.
-  - Job applications can be created and filtered by missing next action.
+  - Detailed application/resume tracker is absent from the main screen.
   - Study/project creation and assistant daily-plan request work end to end.
 - README quick-start and command documentation.
 
@@ -56,7 +54,7 @@
 - `npm run test` passed: 10 files, 35 tests.
 - `npm run build` passed.
 - `npm run lint` passed.
-- `npm run test:e2e` passed: 4 Playwright tests.
+- `npm run test:e2e` passed: 3 Playwright tests.
 - `npm run db:up` started PostgreSQL and the container reported healthy.
 - `npx prisma migrate status` reported the database schema is up to date.
 - `npm run db:seed` completed successfully.

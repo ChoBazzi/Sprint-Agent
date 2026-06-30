@@ -7,13 +7,14 @@ test.beforeEach(async ({ page }) => {
 
 test("renders seeded workspace data", async ({ page }) => {
   await expect(page.getByText("취업 준비 Sprint")).toBeVisible();
-  await expect(page.getByRole("list", { name: "Job applications" }).getByText("Wanted Labs")).toBeVisible();
   await expect(page.getByRole("list", { name: "Study items" }).getByText("네트워크 면접 질문")).toBeVisible();
   await expect(
     page.getByRole("list", { name: "Portfolio projects" }).getByText("Developer Job-Prep Assistant")
   ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Application Tracker" })).toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Job applications" })).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Google Calendar Handoff" })).toBeVisible();
-  await expect(page.getByText("환경 설정 필요")).toBeVisible();
+  await expect(page.getByText(/환경 설정 필요|미연결|연결됨/)).toBeVisible();
 });
 
 test("creates, edits, and deletes a sprint work item", async ({ page }) => {
@@ -47,22 +48,6 @@ test("creates, edits, and deletes a sprint work item", async ({ page }) => {
   await expect(updatedCard).toHaveCount(0);
 });
 
-test("creates an application and filters missing next actions", async ({ page }) => {
-  const company = `E2E Co ${Date.now()}`;
-  const applicationSection = page
-    .locator("section")
-    .filter({ has: page.getByRole("heading", { name: "Application Tracker" }) });
-  const createForm = applicationSection.locator("form").filter({ hasText: "지원건 추가" });
-
-  await createForm.getByLabel("회사").fill(company);
-  await createForm.getByLabel("직무").fill("Backend Developer");
-  await createForm.getByRole("button", { name: "지원건 추가" }).click();
-
-  await expect(applicationSection.getByText(company)).toBeVisible();
-  await applicationSection.getByLabel("다음 액션 없음").check();
-  await expect(applicationSection.getByText(company)).toBeVisible();
-});
-
 test("creates study and project items, then requests an assistant plan", async ({ page }) => {
   const study = `E2E Study ${Date.now()}`;
   const studySection = page
@@ -83,6 +68,6 @@ test("creates study and project items, then requests an assistant plan", async (
   await projectSection.locator("form").getByRole("button", { name: "프로젝트 추가" }).click();
   await expect(projectSection.getByText(project)).toBeVisible();
 
-  await page.getByRole("button", { name: "Daily Plan" }).click();
+  await page.getByRole("button", { name: "오늘 계획" }).click();
   await expect(page.locator(".assistant-result")).toBeVisible();
 });

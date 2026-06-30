@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { ApplicationTracker } from "../components/applications/ApplicationTracker";
 import { AssistantPanel } from "../components/assistant/AssistantPanel";
 import { CalendarHandoffPanel } from "../components/calendar/CalendarHandoffPanel";
 import { DailyCommandCenter } from "../components/dashboard/DailyCommandCenter";
@@ -8,18 +7,15 @@ import { SprintBoard } from "../components/sprint/SprintBoard";
 import { StudyPlanner } from "../components/study/StudyPlanner";
 import type { AssistantResponse } from "../domain/assistant";
 import type { CalendarExportResult, CalendarProviderStatus } from "../domain/calendar";
-import type { JobApplication, ResumeVersion } from "../domain/applications";
+import type { JobApplication } from "../domain/applications";
 import type { PortfolioProject } from "../domain/projects";
 import type { StudyItem } from "../domain/study";
 import type { Sprint, WorkItemStatus } from "../domain/sprint";
 import {
   createDailyPlan,
-  createApplicationReview,
   createGoogleCalendarEvent,
-  createJobApplication,
   createProject,
   createProjectReview,
-  createResumeVersion,
   createSprintReview,
   createSprint,
   createStudyItem,
@@ -30,36 +26,26 @@ import {
   getGoogleCalendarStatus,
   listJobApplications,
   listProjects,
-  listResumeVersions,
   listStudyItems,
   patchProject,
   patchStudyItem,
   patchWorkItem,
-  updateJobApplication,
-  updateResumeVersion,
   updateWorkItemStatus,
-  type CreateJobApplicationPayload,
   type CreateCalendarEventPayload,
   type CreateProjectPayload,
-  type CreateResumeVersionPayload,
   type CreateSprintPayload,
   type CreateStudyItemPayload,
-  type JobApplicationListParams,
   type PatchProjectPayload,
   type PatchStudyItemPayload,
   type PatchWorkItemPayload,
-  type UpdateJobApplicationPayload,
-  type UpdateResumeVersionPayload,
   type CreateWorkItemPayload
 } from "../storage/api-client";
 
 export function App() {
   const [sprint, setSprint] = useState<Sprint | null>(null);
   const [applications, setApplications] = useState<JobApplication[]>([]);
-  const [resumeVersions, setResumeVersions] = useState<ResumeVersion[]>([]);
   const [studyItems, setStudyItems] = useState<StudyItem[]>([]);
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
-  const [applicationFilters, setApplicationFilters] = useState<JobApplicationListParams>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isAssistantLoading, setIsAssistantLoading] = useState(false);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
@@ -73,22 +59,14 @@ export function App() {
     setError(null);
 
     try {
-      const [
-        activeSprint,
-        jobApplications,
-        resumeVersionList,
-        studyItemList,
-        projectList
-      ] = await Promise.all([
+      const [activeSprint, jobApplications, studyItemList, projectList] = await Promise.all([
         getActiveSprint(),
-        listJobApplications(applicationFilters),
-        listResumeVersions(),
+        listJobApplications(),
         listStudyItems(),
         listProjects()
       ]);
       setSprint(activeSprint);
       setApplications(jobApplications);
-      setResumeVersions(resumeVersionList);
       setStudyItems(studyItemList);
       setProjects(projectList);
     } catch {
@@ -96,7 +74,7 @@ export function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [applicationFilters]);
+  }, []);
 
   useEffect(() => {
     void refreshWorkspace();
@@ -167,46 +145,6 @@ export function App() {
     }
   }
 
-  async function handleCreateResumeVersion(input: CreateResumeVersionPayload) {
-    setError(null);
-    try {
-      await createResumeVersion(input);
-      await refreshWorkspace();
-    } catch {
-      setError("이력서 버전 추가에 실패했습니다.");
-    }
-  }
-
-  async function handleUpdateResumeVersion(id: string, input: UpdateResumeVersionPayload) {
-    setError(null);
-    try {
-      await updateResumeVersion(id, input);
-      await refreshWorkspace();
-    } catch {
-      setError("이력서 버전 변경에 실패했습니다.");
-    }
-  }
-
-  async function handleCreateApplication(input: CreateJobApplicationPayload) {
-    setError(null);
-    try {
-      await createJobApplication(input);
-      await refreshWorkspace();
-    } catch {
-      setError("지원건 추가에 실패했습니다.");
-    }
-  }
-
-  async function handleUpdateApplication(id: string, input: UpdateJobApplicationPayload) {
-    setError(null);
-    try {
-      await updateJobApplication(id, input);
-      await refreshWorkspace();
-    } catch {
-      setError("지원건 변경에 실패했습니다.");
-    }
-  }
-
   async function handleCreateStudyItem(input: CreateStudyItemPayload) {
     setError(null);
     try {
@@ -257,10 +195,6 @@ export function App() {
 
   async function handleRequestSprintReview() {
     await requestAssistantResponse(() => createSprintReview());
-  }
-
-  async function handleRequestApplicationReview() {
-    await requestAssistantResponse(() => createApplicationReview());
   }
 
   async function handleRequestProjectReview() {
@@ -317,21 +251,22 @@ export function App() {
         error={error}
         onRetry={refreshWorkspace}
       />
-      <AssistantPanel
-        response={assistantResponse}
-        isLoading={isAssistantLoading}
-        onRequestPlan={handleRequestDailyPlan}
-        onRequestSprintReview={handleRequestSprintReview}
-        onRequestApplicationReview={handleRequestApplicationReview}
-        onRequestProjectReview={handleRequestProjectReview}
-      />
-      <CalendarHandoffPanel
-        status={calendarStatus}
-        result={calendarResult}
-        isLoading={isCalendarLoading}
-        onConnect={handleConnectGoogleCalendar}
-        onCreateEvent={handleCreateGoogleCalendarEvent}
-      />
+      <div className="execution-grid">
+        <AssistantPanel
+          response={assistantResponse}
+          isLoading={isAssistantLoading}
+          onRequestPlan={handleRequestDailyPlan}
+          onRequestSprintReview={handleRequestSprintReview}
+          onRequestProjectReview={handleRequestProjectReview}
+        />
+        <CalendarHandoffPanel
+          status={calendarStatus}
+          result={calendarResult}
+          isLoading={isCalendarLoading}
+          onConnect={handleConnectGoogleCalendar}
+          onCreateEvent={handleCreateGoogleCalendarEvent}
+        />
+      </div>
       <SprintBoard
         sprint={sprint}
         onCreateSprint={handleCreateSprint}
@@ -339,16 +274,6 @@ export function App() {
         onMoveWorkItem={handleMoveWorkItem}
         onPatchWorkItem={handlePatchWorkItem}
         onDeleteWorkItem={handleDeleteWorkItem}
-      />
-      <ApplicationTracker
-        applications={applications}
-        resumeVersions={resumeVersions}
-        filters={applicationFilters}
-        onChangeFilters={setApplicationFilters}
-        onCreateApplication={handleCreateApplication}
-        onCreateResumeVersion={handleCreateResumeVersion}
-        onUpdateResumeVersion={handleUpdateResumeVersion}
-        onUpdateApplication={handleUpdateApplication}
       />
       <StudyPlanner
         studyItems={studyItems}

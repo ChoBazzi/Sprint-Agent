@@ -18,23 +18,23 @@ Build a web-based personal operating assistant for a developer job seeker.
 The app helps the user run their job-prep life like a developer team workflow:
 
 - Manage personal and study schedules through sprint planning.
-- Track job applications, resume versions, deadlines, and next actions.
+- Surface job application deadlines and next actions as planning signals.
 - Manage portfolio projects with tasks, milestones, and status.
 - Produce a daily operating view that recommends what to focus on today.
 - Adjust priorities when deadlines, sprint scope, or progress changes.
-- Use Codex as an AI assistant for sprint planning, daily prioritization, study plan review, resume/application preparation, and project next-action suggestions.
+- Use Codex as an AI assistant for sprint planning, daily prioritization, study plan review, job follow-up reminders, and project next-action suggestions.
 
 ## MVP User Stories
 - As a user, I can see today's recommended tasks across study, applications, projects, and personal commitments.
 - As a user, I can create a sprint with a date range, goals, backlog items, and daily tasks.
 - As a user, I can move work items through statuses such as backlog, planned, in progress, blocked, done, and skipped.
-- As a user, I can register job applications with company, role, deadline, status, resume version, links, notes, and next action.
+- As a user, I can see job deadlines and missing next actions as planning alerts without making resume management the center of the app.
 - As a user, I can manage study plans by topic, target date, estimated effort, progress, and review cycle.
 - As a user, I can manage projects by goal, stack, milestones, task list, portfolio-readiness, and next action.
 - As a user, I can review a weekly summary of completed work, missed work, blockers, and next sprint suggestions.
 - As a user, I can ask the Codex assistant to generate a daily plan from my current schedule, sprint, applications, study items, and projects.
 - As a user, I can ask the Codex assistant to review my active sprint and suggest a realistic scope adjustment.
-- As a user, I can ask the Codex assistant to suggest next actions for a job application, resume version, or portfolio project.
+- As a user, I can ask the Codex assistant to suggest next actions for job follow-up, study, sprint, or portfolio project work.
 - As a user, I can send a confirmed focus block to Google Calendar so it appears on my phone calendar with reminders handled by Google Calendar.
 
 ## MVP Scope
@@ -43,7 +43,7 @@ The app helps the user run their job-prep life like a developer team workflow:
 - First Codex feature: daily plan generation.
 - First navigation model: dashboard plus board/list views; calendar view is deferred.
 - UI language: Korean-first, with familiar developer workflow terms kept in English where clearer, such as Sprint, Backlog, In Progress, Blocked, and Review.
-- Resume management: metadata-only for MVP; file upload is deferred.
+- Resume management is removed from the main UX; resume file upload is deferred.
 
 ## Tech Stack
 - Frontend: React + TypeScript + Vite

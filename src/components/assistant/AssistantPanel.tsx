@@ -5,7 +5,6 @@ type AssistantPanelProps = {
   isLoading: boolean;
   onRequestPlan: () => Promise<void>;
   onRequestSprintReview: () => Promise<void>;
-  onRequestApplicationReview: () => Promise<void>;
   onRequestProjectReview: () => Promise<void>;
 };
 
@@ -14,28 +13,24 @@ export function AssistantPanel({
   isLoading,
   onRequestPlan,
   onRequestSprintReview,
-  onRequestApplicationReview,
   onRequestProjectReview
 }: AssistantPanelProps) {
   return (
     <section className="panel assistant-panel" aria-labelledby="assistant-title">
       <div className="panel-header">
         <div>
-          <h2 id="assistant-title">Codex Daily Plan</h2>
-          <p className="subtle">Sprint와 지원관리 데이터를 기준으로 오늘 계획을 제안합니다.</p>
+          <h2 id="assistant-title">AI 일정 비서</h2>
+          <p className="subtle">오늘의 공부, 프로젝트, 지원 후속 행동을 실행 가능한 순서로 정리합니다.</p>
         </div>
         <div className="assistant-actions">
           <button type="button" onClick={() => void onRequestPlan()} disabled={isLoading}>
-            {isLoading ? "생성 중" : "Daily Plan"}
+            {isLoading ? "생성 중" : "오늘 계획"}
           </button>
           <button type="button" onClick={() => void onRequestSprintReview()} disabled={isLoading}>
-            Sprint Review
-          </button>
-          <button type="button" onClick={() => void onRequestApplicationReview()} disabled={isLoading}>
-            Application Review
+            Sprint 점검
           </button>
           <button type="button" onClick={() => void onRequestProjectReview()} disabled={isLoading}>
-            Project Review
+            프로젝트 점검
           </button>
         </div>
       </div>
@@ -64,7 +59,7 @@ export function AssistantPanel({
           ) : null}
         </div>
       ) : (
-        <p className="empty-copy">아직 생성된 계획이 없습니다. Sprint 작업을 만든 뒤 요청하세요.</p>
+        <p className="empty-copy">오늘 계획을 생성하면 우선순위와 다음 행동이 여기에 표시됩니다.</p>
       )}
     </section>
   );
