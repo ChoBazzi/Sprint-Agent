@@ -43,16 +43,62 @@ export function DailyCommandCenter({
   const activeCount =
     sprint?.workItems.filter((item) => item.status === "planned" || item.status === "in_progress")
       .length ?? 0;
+  const alertCount =
+    dueApplications.length +
+    missingNextActionApplications.length +
+    dueStudyItems.length +
+    portfolioGaps.length;
+  const alerts = [
+    ...dueApplications.map((application) => ({
+      id: `due-${application.id}`,
+      title: application.company,
+      body: `${application.deadline} 마감, ${application.nextAction || "다음 액션 미정"}`
+    })),
+    ...missingNextActionApplications
+      .filter((application) => !dueApplications.some((due) => due.id === application.id))
+      .map((application) => ({
+        id: `action-${application.id}`,
+        title: application.company,
+        body: `${application.role} 다음 액션을 정해야 합니다.`
+      })),
+    ...dueStudyItems.map((item) => ({
+      id: `study-${item.id}`,
+      title: item.topic,
+      body: `${item.targetDate} 목표, 현재 ${item.progress}% 진행`
+    })),
+    ...portfolioGaps.map((project) => ({
+      id: `project-${project.id}`,
+      title: project.name,
+      body: `${formatPortfolioGap(project)} 보강이 필요합니다.`
+    }))
+  ].slice(0, 4);
+  const primaryRecommendation = recommendations[0];
+  const secondaryRecommendations = recommendations.slice(1, 4);
 
   return (
     <section className="command-center" aria-labelledby="page-title">
-      <div>
-        <div className="page-kicker">AI Schedule Assistant</div>
-        <h1 id="page-title">오늘의 커맨드 센터</h1>
-        <p className="page-summary">
-          공부, 프로젝트, 지원 후속 행동을 한 곳에서 정리하고 확정한 시간만 캘린더로 보냅니다.
-          AI 제안은 계획을 바꾸지 않고 검토용으로만 생성됩니다.
-        </p>
+      <div className="command-hero">
+        <div>
+          <div className="page-kicker">Personal Assistant</div>
+          <h1 id="page-title">오늘의 커맨드 센터</h1>
+          <p className="page-summary">
+            오늘 처리할 일과 막힌 지점만 먼저 봅니다. 자세한 수정은 아래 작업 관리에서 합니다.
+          </p>
+        </div>
+        <div className="command-summary" aria-busy={isLoading}>
+          <div>
+            <span>진행 작업</span>
+            <strong>{activeCount}</strong>
+          </div>
+          <div>
+            <span>막힘</span>
+            <strong>{blockedCount}</strong>
+          </div>
+          <div>
+            <span>알림</span>
+            <strong>{alertCount}</strong>
+          </div>
+        </div>
       </div>
 
       {error ? (
@@ -65,99 +111,49 @@ export function DailyCommandCenter({
         </div>
       ) : null}
 
-      <div className="metric-grid" aria-busy={isLoading}>
-        <article className="metric">
-          <span className="metric-label">Focus Sprint</span>
-          <strong>{sprint?.name ?? "없음"}</strong>
-          <span>{sprint?.goal ?? "새 Sprint를 만들어 시작하세요."}</span>
-        </article>
-        <article className="metric">
-          <span className="metric-label">Today Work</span>
-          <strong>{activeCount}</strong>
-          <span>오늘 이어갈 수 있는 작업</span>
-        </article>
-        <article className="metric">
-          <span className="metric-label">Blocked</span>
-          <strong>{blockedCount}</strong>
-          <span>먼저 풀어야 하는 작업</span>
-        </article>
-        <article className="metric">
-          <span className="metric-label">Study Targets</span>
-          <strong>{dueStudyItems.length}</strong>
-          <span>3일 안에 목표일인 공부</span>
-        </article>
-        <article className="metric">
-          <span className="metric-label">Job Follow-ups</span>
-          <strong>{jobFollowUpCount}</strong>
-          <span>마감 또는 다음 행동 확인 필요</span>
-        </article>
-        <article className="metric">
-          <span className="metric-label">Project Gaps</span>
-          <strong>{portfolioGaps.length}</strong>
-          <span>README, 배포, 테스트 등 보강 필요</span>
-        </article>
-      </div>
-
-      <article className="panel">
+      <div className="command-grid">
+      <article className="panel focus-panel">
         <div className="panel-header">
-          <h2>오늘 실행 후보</h2>
+          <h2>지금 먼저 할 일</h2>
           <span className="subtle">{recommendations.length} items</span>
         </div>
-        {recommendations.length > 0 ? (
+        {primaryRecommendation ? (
+          <>
+            <div className="primary-task">
+              <span>{formatArea(primaryRecommendation.item.area)}</span>
+              <strong>{primaryRecommendation.item.title}</strong>
+              <p>{formatRecommendationReasons(primaryRecommendation.reasons)}</p>
+            </div>
+            {secondaryRecommendations.length > 0 ? (
           <ol className="focus-list">
-            {recommendations.map((recommendation) => (
+                {secondaryRecommendations.map((recommendation) => (
               <li key={recommendation.item.id}>
                 <strong>{recommendation.item.title}</strong>
-                <span>{recommendation.reasons.join(", ")}</span>
+                <span>{formatRecommendationReasons(recommendation.reasons)}</span>
               </li>
             ))}
           </ol>
+            ) : null}
+          </>
         ) : (
           <p className="empty-copy">아직 추천할 작업이 없습니다. Sprint 작업을 먼저 추가하세요.</p>
         )}
       </article>
 
-      <article className="panel">
+      <article className="panel alert-panel">
         <div className="panel-header">
-          <h2>계획 알림</h2>
-          <span className="subtle">
-            {dueApplications.length +
-              missingNextActionApplications.length +
-              dueStudyItems.length +
-              portfolioGaps.length}{" "}
-            alerts
-          </span>
+          <h2>주의할 것</h2>
+          <span className="subtle">{alertCount} alerts</span>
         </div>
         {dueApplications.length > 0 ||
         missingNextActionApplications.length > 0 ||
         dueStudyItems.length > 0 ||
         portfolioGaps.length > 0 ? (
           <ol className="focus-list">
-            {dueApplications.slice(0, 3).map((application) => (
-              <li key={`due-${application.id}`}>
-                <strong>{application.company}</strong>
-                <span>{application.deadline} 마감, {application.nextAction || "다음 액션 미정"}</span>
-              </li>
-            ))}
-            {missingNextActionApplications
-              .filter((application) => !dueApplications.some((due) => due.id === application.id))
-              .slice(0, 3)
-              .map((application) => (
-                <li key={`action-${application.id}`}>
-                  <strong>{application.company}</strong>
-                  <span>{application.role} 다음 액션을 정해야 합니다.</span>
-                </li>
-              ))}
-            {dueStudyItems.slice(0, 3).map((item) => (
-              <li key={`study-${item.id}`}>
-                <strong>{item.topic}</strong>
-                <span>{item.targetDate} 목표, 현재 {item.progress}% 진행</span>
-              </li>
-            ))}
-            {portfolioGaps.slice(0, 3).map((project) => (
-              <li key={`project-${project.id}`}>
-                <strong>{project.name}</strong>
-                <span>{formatPortfolioGap(project)} 보강이 필요합니다.</span>
+            {alerts.map((alert) => (
+              <li key={alert.id}>
+                <strong>{alert.title}</strong>
+                <span>{alert.body}</span>
               </li>
             ))}
           </ol>
@@ -165,8 +161,32 @@ export function DailyCommandCenter({
           <p className="empty-copy">공부, 프로젝트, 지원 후속 행동이 안정적입니다.</p>
         )}
       </article>
+      </div>
     </section>
   );
+}
+
+function formatArea(area: Sprint["workItems"][number]["area"]): string {
+  const labels: Record<Sprint["workItems"][number]["area"], string> = {
+    study: "Study",
+    application: "Application",
+    project: "Project",
+    personal: "Personal"
+  };
+  return labels[area];
+}
+
+function formatRecommendationReasons(reasons: string[]): string {
+  const labels: Record<string, string> = {
+    blocked: "막힘",
+    due_soon: "마감 임박",
+    high_priority: "높은 우선순위",
+    in_progress: "진행 중",
+    planned_sprint_work: "Sprint 계획",
+    overdue: "기한 지남"
+  };
+
+  return reasons.map((reason) => labels[reason] ?? reason).join(" · ");
 }
 
 function getDueStudyItems(studyItems: StudyItem[], today: Date, days: number): StudyItem[] {

@@ -6,13 +6,22 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("renders seeded workspace data", async ({ page }) => {
-  await expect(page.getByText("취업 준비 Sprint")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "지금 먼저 할 일" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Sprint", selected: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sprint Board" })).toBeVisible();
+
+  await page.getByRole("tab", { name: "Study" }).click();
   await expect(page.getByRole("list", { name: "Study items" }).getByText("네트워크 면접 질문")).toBeVisible();
+
+  await page.getByRole("tab", { name: "Projects" }).click();
   await expect(
     page.getByRole("list", { name: "Portfolio projects" }).getByText("Developer Job-Prep Assistant")
   ).toBeVisible();
+
   await expect(page.getByRole("heading", { name: "Application Tracker" })).toHaveCount(0);
   await expect(page.getByRole("list", { name: "Job applications" })).toHaveCount(0);
+
+  await page.getByRole("tab", { name: "Calendar" }).click();
   await expect(page.getByRole("heading", { name: "Google Calendar Handoff" })).toBeVisible();
   await expect(page.getByText(/환경 설정 필요|미연결|연결됨/)).toBeVisible();
 });
@@ -50,6 +59,7 @@ test("creates, edits, and deletes a sprint work item", async ({ page }) => {
 
 test("creates study and project items, then verifies the assistant status board", async ({ page }) => {
   const study = `E2E Study ${Date.now()}`;
+  await page.getByRole("tab", { name: "Study" }).click();
   const studySection = page
     .locator("section")
     .filter({ has: page.getByRole("heading", { name: "Study Planner" }) });
@@ -59,6 +69,7 @@ test("creates study and project items, then verifies the assistant status board"
   await expect(studySection.getByText(study)).toBeVisible();
 
   const project = `E2E Project ${Date.now()}`;
+  await page.getByRole("tab", { name: "Projects" }).click();
   const projectSection = page
     .locator("section")
     .filter({ has: page.getByRole("heading", { name: "Portfolio Projects" }) });

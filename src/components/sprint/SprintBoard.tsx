@@ -39,6 +39,18 @@ export function SprintBoard({
   onPatchWorkItem,
   onDeleteWorkItem
 }: SprintBoardProps) {
+  const visibleStatuses = sprint
+    ? statuses.filter((status) => {
+        const hasItems = sprint.workItems.some((item) => item.status === status.value);
+        return (
+          hasItems ||
+          status.value === "planned" ||
+          status.value === "in_progress" ||
+          status.value === "blocked"
+        );
+      })
+    : statuses;
+
   return (
     <section className="section-stack" aria-labelledby="sprint-title">
       <div className="section-heading">
@@ -50,7 +62,7 @@ export function SprintBoard({
         <>
           <WorkItemForm onSubmit={onCreateWorkItem} />
           <div className="board" role="list" aria-label="Sprint work item board">
-            {statuses.map((status) => (
+            {visibleStatuses.map((status) => (
               <section className="board-column" key={status.value} aria-labelledby={`${status.value}-title`}>
                 <div className="column-title">
                   <h3 id={`${status.value}-title`}>{status.label}</h3>

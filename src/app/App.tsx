@@ -43,6 +43,15 @@ import {
   type CreateWorkItemPayload
 } from "../storage/api-client";
 
+type WorkspaceTab = "sprint" | "study" | "projects" | "calendar";
+
+const workspaceTabs: Array<{ id: WorkspaceTab; label: string }> = [
+  { id: "sprint", label: "Sprint" },
+  { id: "study", label: "Study" },
+  { id: "projects", label: "Projects" },
+  { id: "calendar", label: "Calendar" }
+];
+
 export function App() {
   const [sprint, setSprint] = useState<Sprint | null>(null);
   const [applications, setApplications] = useState<JobApplication[]>([]);
@@ -54,6 +63,7 @@ export function App() {
   const [assistantDetail, setAssistantDetail] = useState<AssistantConversationDetail | null>(null);
   const [calendarStatus, setCalendarStatus] = useState<CalendarProviderStatus | null>(null);
   const [calendarResult, setCalendarResult] = useState<CalendarExportResult | null>(null);
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<WorkspaceTab>("sprint");
   const [error, setError] = useState<string | null>(null);
 
   const refreshWorkspace = useCallback(async () => {
@@ -298,41 +308,72 @@ export function App() {
         error={error}
         onRetry={refreshWorkspace}
       />
-      <div className="execution-grid">
-        <AssistantPanel
-          detail={assistantDetail}
-          isLoading={isAssistantLoading}
-          onRefresh={handleRefreshAssistantState}
-          onApproveAction={handleApproveAssistantAction}
-          onRejectAction={handleRejectAssistantAction}
-          onApplyAction={handleApplyAssistantAction}
-        />
-        <CalendarHandoffPanel
-          status={calendarStatus}
-          result={calendarResult}
-          isLoading={isCalendarLoading}
-          onConnect={handleConnectGoogleCalendar}
-          onCreateEvent={handleCreateGoogleCalendarEvent}
-        />
-      </div>
-      <SprintBoard
-        sprint={sprint}
-        onCreateSprint={handleCreateSprint}
-        onCreateWorkItem={handleCreateWorkItem}
-        onMoveWorkItem={handleMoveWorkItem}
-        onPatchWorkItem={handlePatchWorkItem}
-        onDeleteWorkItem={handleDeleteWorkItem}
+      <AssistantPanel
+        detail={assistantDetail}
+        isLoading={isAssistantLoading}
+        onRefresh={handleRefreshAssistantState}
+        onApproveAction={handleApproveAssistantAction}
+        onRejectAction={handleRejectAssistantAction}
+        onApplyAction={handleApplyAssistantAction}
       />
-      <StudyPlanner
-        studyItems={studyItems}
-        onCreateStudyItem={handleCreateStudyItem}
-        onPatchStudyItem={handlePatchStudyItem}
-      />
-      <ProjectTracker
-        projects={projects}
-        onCreateProject={handleCreateProject}
-        onPatchProject={handlePatchProject}
-      />
+      <section className="workspace-shell" aria-labelledby="workspace-title">
+        <div className="section-heading">
+          <div>
+            <h2 id="workspace-title">작업 관리</h2>
+            <p>필요한 영역만 열어서 수정합니다.</p>
+          </div>
+          <div className="tab-list" role="tablist" aria-label="Workspace sections">
+            {workspaceTabs.map((tab) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeWorkspaceTab === tab.id}
+                className={activeWorkspaceTab === tab.id ? "tab-button tab-active" : "tab-button"}
+                onClick={() => setActiveWorkspaceTab(tab.id)}
+                key={tab.id}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="workspace-panel">
+          {activeWorkspaceTab === "sprint" ? (
+            <SprintBoard
+              sprint={sprint}
+              onCreateSprint={handleCreateSprint}
+              onCreateWorkItem={handleCreateWorkItem}
+              onMoveWorkItem={handleMoveWorkItem}
+              onPatchWorkItem={handlePatchWorkItem}
+              onDeleteWorkItem={handleDeleteWorkItem}
+            />
+          ) : null}
+          {activeWorkspaceTab === "study" ? (
+            <StudyPlanner
+              studyItems={studyItems}
+              onCreateStudyItem={handleCreateStudyItem}
+              onPatchStudyItem={handlePatchStudyItem}
+            />
+          ) : null}
+          {activeWorkspaceTab === "projects" ? (
+            <ProjectTracker
+              projects={projects}
+              onCreateProject={handleCreateProject}
+              onPatchProject={handlePatchProject}
+            />
+          ) : null}
+          {activeWorkspaceTab === "calendar" ? (
+            <CalendarHandoffPanel
+              status={calendarStatus}
+              result={calendarResult}
+              isLoading={isCalendarLoading}
+              onConnect={handleConnectGoogleCalendar}
+              onCreateEvent={handleCreateGoogleCalendarEvent}
+            />
+          ) : null}
+        </div>
+      </section>
     </main>
   );
 }
