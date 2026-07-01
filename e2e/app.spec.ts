@@ -94,5 +94,7 @@ test("creates study and project items, then verifies the assistant status board"
 
   await expect(page.getByRole("heading", { name: "Codex CLI 상태판" })).toBeVisible();
   await expect(page.getByRole("button", { name: "새로고침" })).toBeVisible();
+  await page.getByRole("button", { name: "MCP 로그 보기" }).click();
+  await expect(page.getByRole("dialog", { name: "MCP 작업 로그" })).toBeVisible();
   await expect(page.getByLabel("Assistant tracked actions")).toBeVisible();
 });

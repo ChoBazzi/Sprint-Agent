@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type {
   AssistantAction,
   AssistantConversationDetail
@@ -20,8 +21,10 @@ export function AssistantPanel({
   onRejectAction,
   onApplyAction
 }: AssistantPanelProps) {
+  const [isLogOpen, setIsLogOpen] = useState(false);
   const messages = detail?.messages ?? [];
   const actions = detail?.actions ?? [];
+  const pendingActions = actions.filter((action) => action.status === "proposed" || action.status === "approved");
 
   return (
     <section className="panel assistant-panel" aria-labelledby="assistant-title">
@@ -36,6 +39,13 @@ export function AssistantPanel({
           <button
             type="button"
             className="button-secondary"
+            onClick={() => setIsLogOpen(true)}
+          >
+            MCP 로그 보기
+          </button>
+          <button
+            type="button"
+            className="button-secondary"
             onClick={() => void onRefresh()}
             disabled={isLoading}
           >
@@ -44,54 +54,90 @@ export function AssistantPanel({
         </div>
       </div>
 
-      <div className="assistant-chat-layout">
-        <div className="assistant-thread" aria-live="polite">
-          {detail ? (
-            <div className="assistant-session-meta">
-              <strong>{detail.conversation.title}</strong>
-              <span>최근 갱신 {formatDateTime(detail.conversation.updatedAt)}</span>
-            </div>
-          ) : null}
-          {messages.length > 0 ? (
-            messages.map((message) => (
-              <article className={`message-bubble message-${message.role}`} key={message.id}>
-                <span>{formatMessageRole(message.role)}</span>
-                <p>{message.content}</p>
-                <time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time>
-              </article>
-            ))
-          ) : (
-            <p className="empty-copy">
-              아직 MCP가 기록한 CLI 대화 이벤트가 없습니다. Codex CLI에서 작업을 시작하면
-              상태가 이곳에 쌓입니다.
-            </p>
-          )}
-          {isLoading ? <p className="assistant-warning">상태를 불러오는 중입니다.</p> : null}
+      <div className="assistant-compact-status" aria-label="Codex MCP status summary">
+        <div>
+          <span>최근 세션</span>
+          <strong>{detail?.conversation.title ?? "기록 없음"}</strong>
+          <small>
+            {detail ? `최근 갱신 ${formatDateTime(detail.conversation.updatedAt)}` : "CLI 대화 이벤트 대기 중"}
+          </small>
         </div>
-
-        <div className="assistant-action-rail" aria-label="Assistant tracked actions">
-          <div className="panel-header">
-            <h3>MCP 작업 상태</h3>
-            <span className="subtle">{actions.length} items</span>
-          </div>
-          {actions.length > 0 ? (
-            <div className="assistant-action-list">
-              {actions.map((action) => (
-                <AssistantActionCard
-                  action={action}
-                  isLoading={isLoading}
-                  onApproveAction={onApproveAction}
-                  onRejectAction={onRejectAction}
-                  onApplyAction={onApplyAction}
-                  key={action.id}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="empty-copy">MCP가 만든 캘린더 작업 초안이 없습니다.</p>
-          )}
+        <div>
+          <span>대화 로그</span>
+          <strong>{messages.length}</strong>
+          <small>items</small>
+        </div>
+        <div>
+          <span>MCP 작업</span>
+          <strong>{actions.length}</strong>
+          <small>{pendingActions.length} pending</small>
         </div>
       </div>
+
+      {isLoading ? <p className="assistant-warning">상태를 불러오는 중입니다.</p> : null}
+
+      {isLogOpen ? (
+        <div className="detail-backdrop">
+          <section className="detail-panel assistant-log-panel" role="dialog" aria-modal="true" aria-label="MCP 작업 로그">
+            <div className="detail-panel-header">
+              <div>
+                <span className="task-type">Codex MCP</span>
+                <h3>MCP 작업 로그</h3>
+              </div>
+              <button type="button" className="button-secondary" onClick={() => setIsLogOpen(false)}>
+                닫기
+              </button>
+            </div>
+            <div className="assistant-chat-layout">
+              <div className="assistant-thread" aria-live="polite">
+                {detail ? (
+                  <div className="assistant-session-meta">
+                    <strong>{detail.conversation.title}</strong>
+                    <span>최근 갱신 {formatDateTime(detail.conversation.updatedAt)}</span>
+                  </div>
+                ) : null}
+                {messages.length > 0 ? (
+                  messages.map((message) => (
+                    <article className={`message-bubble message-${message.role}`} key={message.id}>
+                      <span>{formatMessageRole(message.role)}</span>
+                      <p>{message.content}</p>
+                      <time dateTime={message.createdAt}>{formatDateTime(message.createdAt)}</time>
+                    </article>
+                  ))
+                ) : (
+                  <p className="empty-copy">
+                    아직 MCP가 기록한 CLI 대화 이벤트가 없습니다. Codex CLI에서 작업을 시작하면
+                    상태가 이곳에 쌓입니다.
+                  </p>
+                )}
+              </div>
+
+              <div className="assistant-action-rail" aria-label="Assistant tracked actions">
+                <div className="panel-header">
+                  <h3>MCP 작업 상태</h3>
+                  <span className="subtle">{actions.length} items</span>
+                </div>
+                {actions.length > 0 ? (
+                  <div className="assistant-action-list">
+                    {actions.map((action) => (
+                      <AssistantActionCard
+                        action={action}
+                        isLoading={isLoading}
+                        onApproveAction={onApproveAction}
+                        onRejectAction={onRejectAction}
+                        onApplyAction={onApplyAction}
+                        key={action.id}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="empty-copy">MCP가 만든 캘린더 작업 초안이 없습니다.</p>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
