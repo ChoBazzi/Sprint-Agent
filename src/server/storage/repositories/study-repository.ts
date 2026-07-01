@@ -24,4 +24,5 @@ export interface StudyRepository {
   listStudyItems(): Promise<StudyItem[]>;
   createStudyItem(input: CreateStudyItemInput): Promise<StudyItem>;
   patchStudyItem(id: string, input: PatchStudyItemInput): Promise<StudyItem>;
+  deleteStudyItem(id: string): Promise<void>;
 }

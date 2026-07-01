@@ -16,6 +16,10 @@ export function createProjectService(repository: ProjectRepository) {
 
     patchProject(id: string, input: PatchProjectInput) {
       return repository.patchProject(id, input);
+    },
+
+    deleteProject(id: string) {
+      return repository.deleteProject(id);
     }
   };
 }

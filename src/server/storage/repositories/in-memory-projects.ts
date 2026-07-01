@@ -48,6 +48,10 @@ export class InMemoryProjectRepository implements ProjectRepository {
     return updated;
   }
 
+  async deleteProject(id: string): Promise<void> {
+    this.projects.delete(id);
+  }
+
   private createId(): string {
     const id = `project-${this.nextId}`;
     this.nextId += 1;

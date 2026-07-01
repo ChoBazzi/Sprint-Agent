@@ -41,6 +41,10 @@ export class InMemoryStudyRepository implements StudyRepository {
     return updated;
   }
 
+  async deleteStudyItem(id: string): Promise<void> {
+    this.studyItems.delete(id);
+  }
+
   private createId(): string {
     const id = `study-${this.nextId}`;
     this.nextId += 1;

@@ -64,5 +64,14 @@ export function createStudyRouter(repository: StudyRepository): Router {
     }
   });
 
+  router.delete("/study-items/:id", async (request, response, next) => {
+    try {
+      await service.deleteStudyItem(request.params.id);
+      response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return router;
 }

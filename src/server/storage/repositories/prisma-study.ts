@@ -52,6 +52,10 @@ export class PrismaStudyRepository implements StudyRepository {
 
     return toStudyItem(studyItem);
   }
+
+  async deleteStudyItem(id: string): Promise<void> {
+    await this.db.studyItem.delete({ where: { id } });
+  }
 }
 
 function toStudyItem(studyItem: {

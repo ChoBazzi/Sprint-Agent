@@ -11,4 +11,5 @@ export interface ProjectRepository {
   listProjects(): Promise<PortfolioProject[]>;
   createProject(input: CreateProjectInput): Promise<PortfolioProject>;
   patchProject(id: string, input: PatchProjectInput): Promise<PortfolioProject>;
+  deleteProject(id: string): Promise<void>;
 }

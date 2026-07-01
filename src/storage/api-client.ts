@@ -259,6 +259,12 @@ export async function patchStudyItem(
   return result.data;
 }
 
+export async function deleteStudyItem(id: string): Promise<void> {
+  await request<void>(`/api/study-items/${id}`, {
+    method: "DELETE"
+  });
+}
+
 export async function listProjects(): Promise<PortfolioProject[]> {
   const result = await request<ApiResult<PortfolioProject[]>>("/api/projects");
   return result.data;
@@ -281,6 +287,12 @@ export async function patchProject(
     body: JSON.stringify(payload)
   });
   return result.data;
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  await request<void>(`/api/projects/${id}`, {
+    method: "DELETE"
+  });
 }
 
 export async function createDailyPlan(payload: DailyPlanRequest): Promise<AssistantResponse> {

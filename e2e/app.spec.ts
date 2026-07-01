@@ -50,6 +50,7 @@ test("creates, edits, and deletes a sprint work item", async ({ page }) => {
 
   await inProgressColumn.locator("article.task-card").filter({ hasText: title }).getByRole("button", { name: "자세히" }).click();
   const dialog = page.getByRole("dialog", { name: new RegExp(title) });
+  await expect(dialog.getByRole("button", { name: "캘린더 반영" })).toBeVisible();
   await dialog.getByLabel("작업명").fill(updatedTitle);
   await dialog.getByLabel("우선순위").selectOption("1");
   await dialog.getByRole("button", { name: "저장" }).click();
@@ -71,7 +72,8 @@ test("creates study and project items, then verifies the assistant status board"
 
   await studyForm.getByLabel("주제").fill(study);
   await studyForm.getByRole("button", { name: "공부 추가" }).click();
-  await expect(kanbanSection.getByText(study)).toBeVisible();
+  const studyCard = kanbanSection.locator("article.task-card").filter({ hasText: study });
+  await expect(studyCard).toBeVisible();
 
   const project = `E2E Project ${Date.now()}`;
   const projectForm = kanbanSection.getByRole("form", { name: "프로젝트 추가" });
@@ -79,7 +81,16 @@ test("creates study and project items, then verifies the assistant status board"
   await projectForm.getByLabel("프로젝트").fill(project);
   await projectForm.getByLabel("목표").fill("E2E smoke flow");
   await projectForm.getByRole("button", { name: "프로젝트 추가" }).click();
-  await expect(kanbanSection.getByText(project)).toBeVisible();
+  const projectCard = kanbanSection.locator("article.task-card").filter({ hasText: project });
+  await expect(projectCard).toBeVisible();
+
+  await studyCard.getByRole("button", { name: "자세히" }).click();
+  await page.getByRole("dialog", { name: new RegExp(study) }).getByRole("button", { name: "삭제" }).click();
+  await expect(studyCard).toHaveCount(0);
+
+  await projectCard.getByRole("button", { name: "자세히" }).click();
+  await page.getByRole("dialog", { name: new RegExp(project) }).getByRole("button", { name: "삭제" }).click();
+  await expect(projectCard).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "Codex CLI 상태판" })).toBeVisible();
   await expect(page.getByRole("button", { name: "새로고침" })).toBeVisible();

@@ -545,6 +545,21 @@ button:hover {
   gap: 14px;
 }
 
+.detail-subsection {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.detail-subsection h4 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.9375rem;
+}
+
 .detail-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

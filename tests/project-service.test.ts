@@ -60,4 +60,17 @@ describe("ProjectService", () => {
       portfolioReady: true
     });
   });
+
+  it("deletes portfolio projects", async () => {
+    const service = createProjectService(new InMemoryProjectRepository());
+    const project = await service.createProject({
+      name: "Calendar Sync",
+      goal: "Show sprint work on Google Calendar",
+      status: "active"
+    });
+
+    await service.deleteProject(project.id);
+
+    await expect(service.listProjects()).resolves.toEqual([]);
+  });
 });

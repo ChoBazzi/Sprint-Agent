@@ -3,6 +3,7 @@ import type { PortfolioProject, ProjectStatus } from "../../domain/projects";
 import type { Sprint, WorkArea, WorkItem, WorkItemStatus } from "../../domain/sprint";
 import type { StudyItem, StudyStatus } from "../../domain/study";
 import type {
+  CreateCalendarEventPayload,
   CreateProjectPayload,
   CreateStudyItemPayload,
   PatchProjectPayload,
@@ -32,8 +33,11 @@ type SprintBoardProps = {
   onDeleteWorkItem: (id: string) => Promise<void>;
   onCreateStudyItem: (input: CreateStudyItemPayload) => Promise<void>;
   onPatchStudyItem: (id: string, input: PatchStudyItemPayload) => Promise<void>;
+  onDeleteStudyItem: (id: string) => Promise<void>;
   onCreateProject: (input: CreateProjectPayload) => Promise<void>;
   onPatchProject: (id: string, input: PatchProjectPayload) => Promise<void>;
+  onDeleteProject: (id: string) => Promise<void>;
+  onCreateSprintCalendarEvent: (input: CreateCalendarEventPayload) => Promise<void>;
 };
 
 type KanbanColumnKey = "planned" | "in_progress" | "blocked" | "reviewing" | "done";
@@ -102,8 +106,11 @@ export function SprintBoard({
   onDeleteWorkItem,
   onCreateStudyItem,
   onPatchStudyItem,
+  onDeleteStudyItem,
   onCreateProject,
-  onPatchProject
+  onPatchProject,
+  onDeleteProject,
+  onCreateSprintCalendarEvent
 }: SprintBoardProps) {
   const [editingItem, setEditingItem] = useState<BoardItem | null>(null);
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
@@ -197,7 +204,10 @@ export function SprintBoard({
               onPatchWorkItem={onPatchWorkItem}
               onDeleteWorkItem={onDeleteWorkItem}
               onPatchStudyItem={onPatchStudyItem}
+              onDeleteStudyItem={onDeleteStudyItem}
               onPatchProject={onPatchProject}
+              onDeleteProject={onDeleteProject}
+              onCreateSprintCalendarEvent={onCreateSprintCalendarEvent}
             />
           ) : null}
         </>
@@ -247,7 +257,10 @@ function DetailPanel({
   onPatchWorkItem,
   onDeleteWorkItem,
   onPatchStudyItem,
-  onPatchProject
+  onDeleteStudyItem,
+  onPatchProject,
+  onDeleteProject,
+  onCreateSprintCalendarEvent
 }: {
   item: BoardItem;
   onClose: () => void;
@@ -255,7 +268,10 @@ function DetailPanel({
   onPatchWorkItem: SprintBoardProps["onPatchWorkItem"];
   onDeleteWorkItem: SprintBoardProps["onDeleteWorkItem"];
   onPatchStudyItem: SprintBoardProps["onPatchStudyItem"];
+  onDeleteStudyItem: SprintBoardProps["onDeleteStudyItem"];
   onPatchProject: SprintBoardProps["onPatchProject"];
+  onDeleteProject: SprintBoardProps["onDeleteProject"];
+  onCreateSprintCalendarEvent: SprintBoardProps["onCreateSprintCalendarEvent"];
 }) {
   return (
     <div className="detail-backdrop">
@@ -275,14 +291,25 @@ function DetailPanel({
             onMoveWorkItem={onMoveWorkItem}
             onPatchWorkItem={onPatchWorkItem}
             onDeleteWorkItem={onDeleteWorkItem}
+            onCreateSprintCalendarEvent={onCreateSprintCalendarEvent}
             onClose={onClose}
           />
         ) : null}
         {item.type === "study" ? (
-          <StudyItemDetail item={item.item} onPatchStudyItem={onPatchStudyItem} onClose={onClose} />
+          <StudyItemDetail
+            item={item.item}
+            onPatchStudyItem={onPatchStudyItem}
+            onDeleteStudyItem={onDeleteStudyItem}
+            onClose={onClose}
+          />
         ) : null}
         {item.type === "project" ? (
-          <ProjectDetail project={item.item} onPatchProject={onPatchProject} onClose={onClose} />
+          <ProjectDetail
+            project={item.item}
+            onPatchProject={onPatchProject}
+            onDeleteProject={onDeleteProject}
+            onClose={onClose}
+          />
         ) : null}
       </section>
     </div>
@@ -294,12 +321,14 @@ function WorkItemDetail({
   onMoveWorkItem,
   onPatchWorkItem,
   onDeleteWorkItem,
+  onCreateSprintCalendarEvent,
   onClose
 }: {
   item: WorkItem;
   onMoveWorkItem: SprintBoardProps["onMoveWorkItem"];
   onPatchWorkItem: SprintBoardProps["onPatchWorkItem"];
   onDeleteWorkItem: SprintBoardProps["onDeleteWorkItem"];
+  onCreateSprintCalendarEvent: SprintBoardProps["onCreateSprintCalendarEvent"];
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState({
@@ -307,6 +336,11 @@ function WorkItemDetail({
     status: item.status,
     priority: item.priority,
     dueDate: item.dueDate ?? ""
+  });
+  const [calendarDraft, setCalendarDraft] = useState({
+    date: item.dueDate ?? new Date().toISOString().slice(0, 10),
+    startTime: "09:00",
+    durationMinutes: "90"
   });
 
   return (
@@ -360,6 +394,62 @@ function WorkItemDetail({
         마감
         <input type="date" value={draft.dueDate} onChange={(event) => setDraft((current) => ({ ...current, dueDate: event.target.value }))} />
       </label>
+      <div className="detail-subsection">
+        <h4>Google Calendar</h4>
+        <div className="form-row">
+          <label>
+            날짜
+            <input
+              type="date"
+              value={calendarDraft.date}
+              onChange={(event) => setCalendarDraft((current) => ({ ...current, date: event.target.value }))}
+            />
+          </label>
+          <label>
+            시작
+            <input
+              type="time"
+              value={calendarDraft.startTime}
+              onChange={(event) => setCalendarDraft((current) => ({ ...current, startTime: event.target.value }))}
+            />
+          </label>
+        </div>
+        <label>
+          분
+          <input
+            type="number"
+            min="15"
+            step="15"
+            value={calendarDraft.durationMinutes}
+            onChange={(event) => setCalendarDraft((current) => ({ ...current, durationMinutes: event.target.value }))}
+          />
+        </label>
+        <button
+          type="button"
+          className="button-secondary"
+          disabled={!draft.title.trim() || !calendarDraft.date || !calendarDraft.startTime}
+          onClick={() => {
+            const duration = Number(calendarDraft.durationMinutes);
+            if (!Number.isFinite(duration) || duration <= 0) {
+              return;
+            }
+
+            const start = new Date(`${calendarDraft.date}T${calendarDraft.startTime}:00`);
+            const end = new Date(start.getTime() + duration * 60 * 1000);
+            void onCreateSprintCalendarEvent({
+              summary: draft.title,
+              description: `Sprint 작업: ${formatArea(item.area)} · ${formatPriority(draft.priority)}`,
+              startDateTime: formatLocalDateTimeWithOffset(start),
+              endDateTime: formatLocalDateTimeWithOffset(end),
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Seoul",
+              sourceType: "sprint",
+              sourceId: item.id
+            });
+          }}
+        >
+          캘린더 반영
+        </button>
+      </div>
       <div className="detail-actions">
         <button type="submit" disabled={!draft.title.trim()}>
           저장
@@ -379,10 +469,12 @@ function WorkItemDetail({
 function StudyItemDetail({
   item,
   onPatchStudyItem,
+  onDeleteStudyItem,
   onClose
 }: {
   item: StudyItem;
   onPatchStudyItem: SprintBoardProps["onPatchStudyItem"];
+  onDeleteStudyItem: SprintBoardProps["onDeleteStudyItem"];
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState({
@@ -443,9 +535,18 @@ function StudyItemDetail({
           <input type="date" value={draft.reviewDate} onChange={(event) => setDraft((current) => ({ ...current, reviewDate: event.target.value }))} />
         </label>
       </div>
-      <button type="submit" disabled={!draft.topic.trim()}>
-        저장
-      </button>
+      <div className="detail-actions">
+        <button type="submit" disabled={!draft.topic.trim()}>
+          저장
+        </button>
+        <button
+          type="button"
+          className="button-secondary"
+          onClick={() => void onDeleteStudyItem(item.id).then(onClose)}
+        >
+          삭제
+        </button>
+      </div>
     </form>
   );
 }
@@ -453,10 +554,12 @@ function StudyItemDetail({
 function ProjectDetail({
   project,
   onPatchProject,
+  onDeleteProject,
   onClose
 }: {
   project: PortfolioProject;
   onPatchProject: SprintBoardProps["onPatchProject"];
+  onDeleteProject: SprintBoardProps["onDeleteProject"];
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState({
@@ -506,7 +609,16 @@ function ProjectDetail({
           </label>
         ))}
       </div>
-      <button type="submit">저장</button>
+      <div className="detail-actions">
+        <button type="submit">저장</button>
+        <button
+          type="button"
+          className="button-secondary"
+          onClick={() => void onDeleteProject(project.id).then(onClose)}
+        >
+          삭제
+        </button>
+      </div>
     </form>
   );
 }
@@ -791,4 +903,22 @@ function formatPriority(priority: 1 | 2 | 3): string {
     3: "High"
   };
   return labels[priority];
+}
+
+function formatLocalDateTimeWithOffset(date: Date): string {
+  const offsetMinutes = -date.getTimezoneOffset();
+  const offsetSign = offsetMinutes >= 0 ? "+" : "-";
+  const absoluteOffsetMinutes = Math.abs(offsetMinutes);
+  const offsetHours = Math.floor(absoluteOffsetMinutes / 60);
+  const remainingOffsetMinutes = absoluteOffsetMinutes % 60;
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${offsetSign}${pad(offsetHours)}:${pad(
+    remainingOffsetMinutes
+  )}`;
+}
+
+function pad(value: number): string {
+  return String(value).padStart(2, "0");
 }

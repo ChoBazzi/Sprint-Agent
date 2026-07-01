@@ -18,6 +18,8 @@ import {
   createSprint,
   createStudyItem,
   createWorkItem,
+  deleteProject,
+  deleteStudyItem,
   deleteWorkItem,
   getActiveSprint,
   getAssistantConversation,
@@ -197,6 +199,16 @@ export function App() {
     }
   }
 
+  async function handleDeleteStudyItem(id: string) {
+    setError(null);
+    try {
+      await deleteStudyItem(id);
+      await refreshWorkspace();
+    } catch {
+      setError("공부 항목 삭제에 실패했습니다.");
+    }
+  }
+
   async function handleCreateProject(input: CreateProjectPayload) {
     setError(null);
     try {
@@ -214,6 +226,16 @@ export function App() {
       await refreshWorkspace();
     } catch {
       setError("프로젝트 상태 변경에 실패했습니다.");
+    }
+  }
+
+  async function handleDeleteProject(id: string) {
+    setError(null);
+    try {
+      await deleteProject(id);
+      await refreshWorkspace();
+    } catch {
+      setError("프로젝트 삭제에 실패했습니다.");
     }
   }
 
@@ -339,8 +361,11 @@ export function App() {
               onDeleteWorkItem={handleDeleteWorkItem}
               onCreateStudyItem={handleCreateStudyItem}
               onPatchStudyItem={handlePatchStudyItem}
+              onDeleteStudyItem={handleDeleteStudyItem}
               onCreateProject={handleCreateProject}
               onPatchProject={handlePatchProject}
+              onDeleteProject={handleDeleteProject}
+              onCreateSprintCalendarEvent={handleCreateGoogleCalendarEvent}
             />
           </div>
         </div>

@@ -64,5 +64,14 @@ export function createProjectRouter(repository: ProjectRepository): Router {
     }
   });
 
+  router.delete("/projects/:id", async (request, response, next) => {
+    try {
+      await service.deleteProject(request.params.id);
+      response.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return router;
 }

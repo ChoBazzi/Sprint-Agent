@@ -61,4 +61,16 @@ describe("StudyService", () => {
       reviewDate: "2026-07-03"
     });
   });
+
+  it("deletes study items", async () => {
+    const service = createStudyService(new InMemoryStudyRepository());
+    const studyItem = await service.createStudyItem({
+      topic: "인증 인가 플로우",
+      status: "planned"
+    });
+
+    await service.deleteStudyItem(studyItem.id);
+
+    await expect(service.listStudyItems()).resolves.toEqual([]);
+  });
 });

@@ -21,6 +21,10 @@ export function createStudyService(repository: StudyRepository) {
 
     patchStudyItem(id: string, input: PatchStudyItemInput) {
       return repository.patchStudyItem(id, input);
+    },
+
+    deleteStudyItem(id: string) {
+      return repository.deleteStudyItem(id);
     }
   };
 }

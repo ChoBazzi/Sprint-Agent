@@ -52,6 +52,10 @@ export class PrismaProjectRepository implements ProjectRepository {
 
     return toPortfolioProject(project);
   }
+
+  async deleteProject(id: string): Promise<void> {
+    await this.db.portfolioProject.delete({ where: { id } });
+  }
 }
 
 function toPortfolioProject(project: NonNullable<PrismaPortfolioProject>): PortfolioProject {
