@@ -1,6 +1,6 @@
 # Developer Job-Prep Assistant
 
-개발자 취업 준비를 Sprint 방식으로 운영하기 위한 개인용 웹앱입니다. 개인 일정, 공부 항목, 회사 지원 현황, 이력서 버전, 포트폴리오 프로젝트를 PostgreSQL에 저장하고, 로컬 Codex CLI를 통해 계획/리뷰 제안을 받을 수 있습니다.
+개발자 취업 준비를 Sprint 방식으로 운영하기 위한 개인용 웹앱입니다. 개인 일정, 공부 항목, 회사 지원 현황, 이력서 버전, 포트폴리오 프로젝트를 PostgreSQL에 저장하고, 로컬 Codex CLI와 MCP 서버를 통해 개인 일정 비서 상태를 추적합니다.
 
 ## Quick Start
 
@@ -30,7 +30,8 @@ npm run dev
 | `npm run db:backup` | `backups/`에 PostgreSQL custom dump 생성 |
 | `npm run db:restore -- backups/<file>.dump` | dump 파일에서 PostgreSQL 복구 |
 | `npm run db:studio` | Prisma Studio 실행 |
-| `npm run mcp:calendar` | Codex가 사용하는 로컬 Calendar MCP 서버 실행 |
+| `npm run mcp:assistant` | Codex가 사용하는 로컬 Personal Assistant MCP 서버 실행 |
+| `npm run mcp:calendar` | 기존 Calendar MCP 실행 별칭 |
 
 ## Architecture
 
@@ -39,8 +40,8 @@ npm run dev
 - Database: PostgreSQL 17 through Docker Compose
 - ORM/migrations: Prisma
 - Tests: Vitest and Playwright
-- AI assistant: server-side adapter around local `codex exec`
-- MCP tools: project-scoped Calendar MCP server in `.codex/config.toml`
+- AI assistant: local Codex CLI as the primary conversational surface
+- MCP tools: project-scoped Personal Assistant MCP server in `.codex/config.toml`
 - Calendar: optional Google Calendar handoff through server-side OAuth
 
 The browser calls application-owned endpoints only. Codex credentials and local auth state stay outside the repository and are never sent to the frontend.
@@ -54,7 +55,7 @@ Implemented MVP workflows:
 - Job follow-up signals in the command center; detailed application/resume management is no longer part of the main screen.
 - Study planner with progress, target dates, review dates, and statuses.
 - Portfolio project tracker with next actions and readiness flags.
-- Conversational assistant with stored messages and tracked calendar action drafts.
+- Codex CLI status board with stored MCP conversation events and tracked calendar action drafts.
 - Google Calendar handoff for confirmed focus blocks.
 
 Deferred by design:
@@ -80,9 +81,9 @@ AI_ASSISTANT_MODE=codex
 CODEX_ASSISTANT_TIMEOUT_MS=60000
 ```
 
-The backend calls `codex exec` in read-only mode. Legacy review endpoints expect structured JSON; the conversational assistant stores plain-text replies and tracked action drafts. If Codex is disabled, the chat UI returns a local stub response.
+Codex CLI is the primary conversational interface. The web app is a status and approval dashboard: it reads MCP-recorded conversation events and lets you approve, reject, or apply tracked calendar actions.
 
-Codex also sees the project-scoped `personal_calendar` MCP server. Calendar writes are tracked as assistant actions first:
+Codex sees the project-scoped `personal_assistant` MCP server. The server exposes workspace snapshot, conversation logging, and calendar draft tools. Calendar writes are tracked as assistant actions first:
 
 ```text
 proposed -> approved -> applied
@@ -90,7 +91,7 @@ proposed -> rejected
 approved -> failed
 ```
 
-The web UI must approve an action before it can be applied.
+The web status board must approve an action before it can be applied. Legacy backend review endpoints still support `AI_ASSISTANT_MODE=stub` or `AI_ASSISTANT_MODE=codex`, but the main assistant workflow is CLI-driven.
 
 ## Google Calendar
 

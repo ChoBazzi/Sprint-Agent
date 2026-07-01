@@ -48,7 +48,7 @@ test("creates, edits, and deletes a sprint work item", async ({ page }) => {
   await expect(updatedCard).toHaveCount(0);
 });
 
-test("creates study and project items, then requests an assistant plan", async ({ page }) => {
+test("creates study and project items, then verifies the assistant status board", async ({ page }) => {
   const study = `E2E Study ${Date.now()}`;
   const studySection = page
     .locator("section")
@@ -68,7 +68,7 @@ test("creates study and project items, then requests an assistant plan", async (
   await projectSection.locator("form").getByRole("button", { name: "프로젝트 추가" }).click();
   await expect(projectSection.getByText(project)).toBeVisible();
 
-  await page.getByRole("button", { name: "오늘 계획" }).click();
-  await expect(page.getByText("지금은 stub 모드라 실제 Codex MCP 도구를 호출하지 않았습니다.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Codex CLI 상태판" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "새로고침" })).toBeVisible();
   await expect(page.getByLabel("Assistant tracked actions")).toBeVisible();
 });

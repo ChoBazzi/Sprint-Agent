@@ -2,25 +2,37 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { AssistantActionService } from "../server/assistant/action-service.js";
+import { PrismaApplicationRepository } from "../server/storage/repositories/prisma-applications.js";
+import { PrismaProjectRepository } from "../server/storage/repositories/prisma-projects.js";
+import { PrismaSprintRepository } from "../server/storage/repositories/prisma-sprints.js";
+import { PrismaStudyRepository } from "../server/storage/repositories/prisma-study.js";
 import { prisma } from "../server/storage/prisma.js";
 
 const sourceTypeSchema = z
   .enum(["study", "application", "project", "sprint", "personal"])
   .optional();
+const messageRoleSchema = z.enum(["user", "assistant", "system"]);
 
 const actionService = new AssistantActionService(prisma);
+const sprintRepository = new PrismaSprintRepository(prisma);
+const applicationRepository = new PrismaApplicationRepository(prisma);
+const studyRepository = new PrismaStudyRepository(prisma);
+const projectRepository = new PrismaProjectRepository(prisma);
 
 const server = new McpServer(
   {
-    name: "personal-calendar-assistant",
+    name: "personal-assistant",
     version: "0.1.0"
   },
   {
     instructions: [
-    "Use this server to track calendar action drafts for the personal assistant app.",
-    "Never apply a calendar action unless the action status is already approved.",
-    "Prefer create_calendar_event_draft and delete_calendar_event_draft during normal chat.",
-    "Return action ids to the user so the web UI can show approval controls."
+      "Use this server as the state bridge for the personal assistant app.",
+      "Codex CLI is the primary conversation surface; the web app is a status and approval dashboard.",
+      "Call get_workspace_snapshot before planning from app data.",
+      "Call log_assistant_event to record important CLI conversation notes, decisions, or summaries.",
+      "Never apply a calendar action unless the action status is already approved.",
+      "Prefer create_calendar_event_draft and delete_calendar_event_draft for calendar changes.",
+      "Return action ids to the user so the web status board can show approval controls."
     ].join(" ")
   }
 );
@@ -40,6 +52,72 @@ server.registerTool(
     return toToolResult({
       message: "Assistant conversation is ready.",
       conversation
+    });
+  }
+);
+
+server.registerTool(
+  "get_workspace_snapshot",
+  {
+    title: "Get personal assistant workspace snapshot",
+    description:
+      "Load current sprint, job follow-up, study, project, and tracked assistant action state for Codex CLI planning.",
+    inputSchema: {
+      conversationId: z.string().optional(),
+      includeActions: z.boolean().default(true)
+    }
+  },
+  async (input) => {
+    const [sprint, applications, resumeVersions, studyItems, projects, actions] =
+      await Promise.all([
+        sprintRepository.getActiveSprint(),
+        applicationRepository.listJobApplications(),
+        applicationRepository.listResumeVersions(),
+        studyRepository.listStudyItems(),
+        projectRepository.listProjects(),
+        input.includeActions ? actionService.listActions(input.conversationId) : Promise.resolve([])
+      ]);
+
+    return toToolResult({
+      message: "Workspace snapshot loaded.",
+      generatedAt: new Date().toISOString(),
+      snapshot: {
+        sprint,
+        applications,
+        resumeVersions,
+        studyItems,
+        projects,
+        actions
+      }
+    });
+  }
+);
+
+server.registerTool(
+  "log_assistant_event",
+  {
+    title: "Log CLI assistant event",
+    description:
+      "Record a Codex CLI conversation note, decision, or summary so the web dashboard can display assistant state.",
+    inputSchema: {
+      conversationId: z.string().optional(),
+      title: z.string().optional(),
+      role: messageRoleSchema.default("assistant"),
+      content: z.string().min(1)
+    }
+  },
+  async (input) => {
+    const conversation = await actionService.ensureConversation(input.conversationId, input.title);
+    const message = await actionService.addMessage({
+      conversationId: conversation.id,
+      role: input.role,
+      content: input.content
+    });
+
+    return toToolResult({
+      message: "Assistant event logged.",
+      conversation,
+      assistantMessage: message
     });
   }
 );
@@ -116,7 +194,7 @@ server.registerTool(
   {
     title: "Apply approved calendar action",
     description:
-      "Apply a tracked calendar action only if it has already been approved by the user in the web UI.",
+      "Apply a tracked calendar action only if it has already been approved by the user in the web status board.",
     inputSchema: {
       actionId: z.string().min(1)
     }

@@ -46,7 +46,7 @@ export function buildChatPrompt(input: AssistantChatRunnerInput): string {
     input.conversationId,
     "For calendar deletion requests, create a delete draft if the user provides or you can identify an event id.",
     "Never call apply_approved_calendar_action unless the action is already approved.",
-    "After creating a draft, mention the draft/action id and tell the user they can approve it in the web UI.",
+    "After creating a draft, mention the draft/action id and tell the user they can approve it in the web status board.",
     "Current workspace context:",
     buildDailyPlanPrompt(input.context),
     "Recent conversation:",

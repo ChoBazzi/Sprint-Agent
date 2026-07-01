@@ -1,7 +1,7 @@
 # Spec: Codex MCP Calendar Assistant
 
 ## Objective
-Build a conversational assistant inside the web app that can discuss study, sprint, project, and job-follow-up planning, then prepare Google Calendar add/delete actions through a local MCP server. The assistant must make proposed actions visible in the web UI and track each action status before anything is applied.
+Build a Codex CLI-driven personal assistant for study, sprint, project, and job-follow-up planning. A local MCP server provides workspace snapshots, records important CLI conversation events, and prepares Google Calendar add/delete actions. The web app is the status and approval dashboard, so proposed actions are visible and tracked before anything is applied.
 
 ## Tech Stack
 - Frontend: React + TypeScript + Vite
@@ -14,7 +14,7 @@ Build a conversational assistant inside the web app that can discuss study, spri
 ## Commands
 - Install: `npm install`
 - Dev: `npm run dev`
-- MCP server smoke: `npm run mcp:calendar`
+- MCP server smoke: `npm run mcp:assistant`
 - Build: `npm run build`
 - Typecheck: `npm run lint`
 - Unit tests: `npm run test`
@@ -24,10 +24,10 @@ Build a conversational assistant inside the web app that can discuss study, spri
 
 ## Project Structure
 - `src/mcp/` contains local MCP servers exposed to Codex.
-- `src/server/assistant/` contains Codex prompt/run orchestration.
+- `src/server/assistant/` contains legacy Codex prompt/run orchestration and assistant action state services.
 - `src/server/api/assistant.ts` exposes assistant chat and action approval APIs.
 - `src/domain/assistant-chat.ts` defines UI/API contracts.
-- `src/components/assistant/` renders the conversational assistant UI.
+- `src/components/assistant/` renders the Codex CLI status and approval dashboard.
 - `prisma/schema.prisma` stores conversations, messages, actions, and calendar links.
 
 ## Code Style
@@ -46,10 +46,10 @@ export async function approveAssistantAction(id: string): Promise<AssistantActio
 Use explicit domain types, Zod validation at API/MCP boundaries, and state transitions that are easy to audit.
 
 ## Testing Strategy
-- Unit tests cover action state transitions and Codex chat prompt construction.
+- Unit tests cover action state transitions and Codex prompt construction.
 - Existing Google Calendar tests remain the provider-level guard.
-- E2E verifies the chat panel renders and the app no longer depends on the removed application tracker.
-- Manual verification can use `AI_ASSISTANT_MODE=stub` for UI and `AI_ASSISTANT_MODE=codex` for local Codex/MCP checks.
+- E2E verifies the status board renders and the app no longer depends on the removed application tracker.
+- Manual verification should run Codex CLI in the project so it can use the project-scoped `personal_assistant` MCP server.
 
 ## Boundaries
 - Always: store user/assistant messages and proposed actions in PostgreSQL.
@@ -60,14 +60,14 @@ Use explicit domain types, Zod validation at API/MCP boundaries, and state trans
 - Never: let Codex directly apply calendar actions without a tracked action record.
 
 ## Success Criteria
-- User can send a chat message from the web UI.
-- Backend stores the conversation and messages.
-- Codex is invoked with MCP server availability when `AI_ASSISTANT_MODE=codex`.
-- MCP server can create tracked calendar action drafts.
+- User can chat with Codex CLI while the MCP server reads workspace state and records conversation events.
+- Backend stores MCP-recorded conversation messages and action state.
+- Codex can access the project-scoped `personal_assistant` MCP server.
+- MCP server can return workspace snapshots and create tracked calendar action drafts.
 - Web UI shows pending actions and lets the user approve or reject them.
 - Calendar apply status is visible as `proposed`, `approved`, `applied`, `rejected`, or `failed`.
 - All tests, lint, build, and E2E pass.
 
 ## Open Questions
 - Two-way Google Calendar sync remains deferred.
-- True persistent Codex SDK threads are deferred; this version stores app-level conversation history and sends it into each Codex run.
+- Fully embedded web chat remains deferred because the local Codex CLI is the intended conversation surface.

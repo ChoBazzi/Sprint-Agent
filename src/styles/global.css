@@ -501,6 +501,27 @@ button:hover {
   padding-right: 4px;
 }
 
+.assistant-session-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.assistant-session-meta strong {
+  color: #0f172a;
+}
+
+.assistant-session-meta span {
+  color: #64748b;
+  font-size: 0.8125rem;
+}
+
 .message-bubble {
   display: grid;
   gap: 6px;
@@ -526,6 +547,11 @@ button:hover {
 .message-bubble p {
   color: #334155;
   white-space: pre-wrap;
+}
+
+.message-bubble time {
+  color: #64748b;
+  font-size: 0.75rem;
 }
 
 .assistant-action-list,
@@ -564,16 +590,10 @@ button:hover {
   font-size: 0.875rem;
 }
 
-.assistant-action-buttons,
-.assistant-compose {
+.assistant-action-buttons {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
-}
-
-.assistant-compose {
-  grid-template-columns: minmax(260px, 1fr) auto;
-  align-items: end;
 }
 
 .assistant-warning {
@@ -593,7 +613,6 @@ button:hover {
   .calendar-form,
   .execution-grid,
   .assistant-chat-layout,
-  .assistant-compose,
   .assistant-action-buttons,
   .dense-row,
   .project-grid,

@@ -14,7 +14,6 @@ import type { Sprint, WorkItemStatus } from "../domain/sprint";
 import {
   applyAssistantAction,
   approveAssistantAction,
-  createAssistantConversation,
   createGoogleCalendarEvent,
   createProject,
   createSprint,
@@ -33,7 +32,6 @@ import {
   patchStudyItem,
   patchWorkItem,
   rejectAssistantAction,
-  sendAssistantMessage,
   updateWorkItemStatus,
   type CreateCalendarEventPayload,
   type CreateProjectPayload,
@@ -100,20 +98,32 @@ export function App() {
     setAssistantDetail(await getAssistantConversation(conversationId));
   }, []);
 
+  const loadLatestAssistantConversation = useCallback(async () => {
+    const conversations = await listAssistantConversations();
+    if (conversations[0]) {
+      setAssistantDetail(await getAssistantConversation(conversations[0].id));
+      return;
+    }
+
+    setAssistantDetail(null);
+  }, []);
+
   useEffect(() => {
-    async function loadLatestConversation() {
+    async function loadSafely() {
       try {
-        const conversations = await listAssistantConversations();
-        if (conversations[0]) {
-          setAssistantDetail(await getAssistantConversation(conversations[0].id));
-        }
+        await loadLatestAssistantConversation();
       } catch {
         setAssistantDetail(null);
       }
     }
 
-    void loadLatestConversation();
-  }, []);
+    void loadSafely();
+    const intervalId = window.setInterval(() => {
+      void loadSafely();
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [loadLatestAssistantConversation]);
 
   async function handleCreateSprint(input: CreateSprintPayload) {
     setError(null);
@@ -234,21 +244,14 @@ export function App() {
     }
   }
 
-  async function handleSendAssistantMessage(content: string) {
+  async function handleRefreshAssistantState() {
     setIsAssistantLoading(true);
     setError(null);
 
     try {
-      const conversation =
-        assistantDetail?.conversation ?? (await createAssistantConversation(content.slice(0, 48)));
-      const response = await sendAssistantMessage(conversation.id, { content });
-      setAssistantDetail({
-        conversation: response.conversation,
-        messages: response.messages,
-        actions: response.actions
-      });
+      await loadLatestAssistantConversation();
     } catch {
-      setError("Assistant 메시지 처리에 실패했습니다.");
+      setError("Assistant 상태를 불러오지 못했습니다.");
     } finally {
       setIsAssistantLoading(false);
     }
@@ -299,7 +302,7 @@ export function App() {
         <AssistantPanel
           detail={assistantDetail}
           isLoading={isAssistantLoading}
-          onSendMessage={handleSendAssistantMessage}
+          onRefresh={handleRefreshAssistantState}
           onApproveAction={handleApproveAssistantAction}
           onRejectAction={handleRejectAssistantAction}
           onApplyAction={handleApplyAssistantAction}

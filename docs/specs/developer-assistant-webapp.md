@@ -35,7 +35,7 @@ The app helps the user run their job-prep life like a developer team workflow:
 - As a user, I can ask the Codex assistant to generate a daily plan from my current schedule, sprint, applications, study items, and projects.
 - As a user, I can ask the Codex assistant to review my active sprint and suggest a realistic scope adjustment.
 - As a user, I can ask the Codex assistant to suggest next actions for job follow-up, study, sprint, or portfolio project work.
-- As a user, I can chat with Codex and review tracked calendar action drafts before approving or rejecting them.
+- As a user, I can chat with Codex CLI and review tracked MCP calendar action drafts before approving or rejecting them in the web app.
 - As a user, I can send a confirmed focus block to Google Calendar so it appears on my phone calendar with reminders handled by Google Calendar.
 
 ## MVP Scope
@@ -52,12 +52,12 @@ The app helps the user run their job-prep life like a developer team workflow:
 - Database: PostgreSQL, initially run locally through Docker Compose
 - Database access: Prisma
 - Migrations: Prisma migrations
-- AI adapter: Node.js backend around local `codex exec` behind `/api/assistant/*` endpoints
+- AI adapter: local Codex CLI with project-scoped MCP tools; legacy review endpoints remain behind `/api/assistant/*`
 - Styling: CSS Modules or plain CSS with design tokens
 - State: React state plus API-backed server state
 - Persistence for MVP: PostgreSQL through the Node backend, not browser-only state
-- AI integration: Node backend exposes stable `/api/assistant/*` endpoints and calls Codex server-side
-- MCP integration: project-scoped Calendar MCP server lets Codex create tracked action drafts
+- AI integration: Codex CLI is the primary conversation surface; the browser never receives Codex credentials
+- MCP integration: project-scoped Personal Assistant MCP server lets Codex read workspace snapshots, log conversation events, and create tracked action drafts
 - Calendar integration: Google Calendar is an external execution/notification layer, not the source of truth for planning data
 - Tests: Vitest for unit tests, Playwright for browser-level checks when UI exists
 - Package manager: npm unless the project later standardizes on another tool
@@ -254,7 +254,7 @@ export interface DailyPlanRequest {
 }
 ```
 
-The backend loads PostgreSQL-backed planning data, builds the assistant context, calls Codex, and stores assistant messages or structured action state before returning data to the UI.
+The MCP server loads PostgreSQL-backed planning data for Codex CLI, records assistant messages or structured action state, and the web app reads that state through application-owned APIs.
 
 Error responses should use a consistent shape:
 
@@ -340,9 +340,9 @@ npm run db:migrate
 - The user can add at least one job application and see its next action and deadline surfaced.
 - The user can add at least one study item and one project task and have both appear in daily recommendations.
 - The recommendation engine can be tested with fixed sample data.
-- The user can trigger a Codex-powered daily plan request and receive structured suggestions.
+- Codex can load the current workspace snapshot through MCP for planning.
 - Assistant suggestions and calendar actions are displayed as reviewable items, not automatically applied changes.
-- The user can approve, reject, and apply tracked calendar actions from the web UI.
+- The user can approve, reject, and apply tracked calendar actions from the web status board.
 - The app handles Codex timeout or unavailable states without losing user data.
 - Reloading the app does not lose entered MVP data because it is persisted in PostgreSQL.
 - The app builds successfully and core domain tests pass.
