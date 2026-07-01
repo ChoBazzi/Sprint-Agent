@@ -10,6 +10,9 @@ coverage/
 test-results/
 playwright-report/
 
+# Local agent context
+.agents/skills/
+
 # Local database/data artifacts
 *.db
 *.sqlite
