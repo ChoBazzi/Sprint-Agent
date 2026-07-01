@@ -36,6 +36,13 @@ export type DeleteCalendarActionDraftInput = {
   summary?: string;
 };
 
+export type UpdateCalendarActionInput = CalendarEventDraft & {
+  conversationId: string;
+  externalEventId: string;
+  provider?: string;
+  calendarId?: string;
+};
+
 type AssistantActionServiceOptions = {
   calendarService?: GoogleCalendarService;
   calendarConfig?: GoogleCalendarConfig;
@@ -152,6 +159,68 @@ export class AssistantActionService {
     return toAction(action);
   }
 
+  async createCalendarEventNow(input: CreateCalendarActionDraftInput): Promise<AssistantAction> {
+    await this.assertConversation(input.conversationId);
+    if (!isValidCalendarRange(input)) {
+      throw new AssistantActionError(
+        "INVALID_CALENDAR_EVENT_RANGE",
+        "Calendar event end time must be after the start time.",
+        422
+      );
+    }
+
+    const action = await this.prisma.assistantAction.create({
+      data: {
+        conversationId: input.conversationId,
+        type: "CREATE_CALENDAR_EVENT",
+        status: "APPROVED",
+        summary: input.summary,
+        description: input.description,
+        startDateTime: new Date(input.startDateTime),
+        endDateTime: new Date(input.endDateTime),
+        timeZone: input.timeZone,
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
+        provider: "google",
+        payload: input as unknown as Prisma.InputJsonValue
+      }
+    });
+    await this.touchConversation(input.conversationId);
+    return this.applyAction(action.id);
+  }
+
+  async updateCalendarEventNow(input: UpdateCalendarActionInput): Promise<AssistantAction> {
+    await this.assertConversation(input.conversationId);
+    if (!isValidCalendarRange(input)) {
+      throw new AssistantActionError(
+        "INVALID_CALENDAR_EVENT_RANGE",
+        "Calendar event end time must be after the start time.",
+        422
+      );
+    }
+
+    const action = await this.prisma.assistantAction.create({
+      data: {
+        conversationId: input.conversationId,
+        type: "UPDATE_CALENDAR_EVENT",
+        status: "APPROVED",
+        summary: input.summary,
+        description: input.description,
+        startDateTime: new Date(input.startDateTime),
+        endDateTime: new Date(input.endDateTime),
+        timeZone: input.timeZone,
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
+        provider: input.provider ?? "google",
+        calendarId: input.calendarId,
+        externalEventId: input.externalEventId,
+        payload: input as unknown as Prisma.InputJsonValue
+      }
+    });
+    await this.touchConversation(input.conversationId);
+    return this.applyAction(action.id);
+  }
+
   async createDeleteCalendarEventDraft(input: DeleteCalendarActionDraftInput): Promise<AssistantAction> {
     await this.assertConversation(input.conversationId);
     const action = await this.prisma.assistantAction.create({
@@ -202,10 +271,7 @@ export class AssistantActionService {
     }
 
     try {
-      const applied =
-        action.type === "CREATE_CALENDAR_EVENT"
-          ? await this.applyCreateCalendarAction(action)
-          : await this.applyDeleteCalendarAction(action);
+      const applied = await this.applyCalendarAction(action);
       await this.touchConversation(action.conversationId);
       return applied;
     } catch (error) {
@@ -218,6 +284,18 @@ export class AssistantActionService {
       });
       return toAction(failed);
     }
+  }
+
+  private async applyCalendarAction(action: PrismaAssistantAction): Promise<AssistantAction> {
+    if (action.type === "CREATE_CALENDAR_EVENT") {
+      return this.applyCreateCalendarAction(action);
+    }
+
+    if (action.type === "UPDATE_CALENDAR_EVENT") {
+      return this.applyUpdateCalendarAction(action);
+    }
+
+    return this.applyDeleteCalendarAction(action);
   }
 
   private async applyCreateCalendarAction(action: PrismaAssistantAction): Promise<AssistantAction> {
@@ -241,6 +319,79 @@ export class AssistantActionService {
 
     await this.prisma.calendarEventLink.create({
       data: {
+        provider: result.provider,
+        calendarId: result.calendarId,
+        externalEventId: result.eventId,
+        sourceType: action.sourceType,
+        sourceId: action.sourceId,
+        summary: action.summary,
+        startDateTime: action.startDateTime,
+        endDateTime: action.endDateTime,
+        status: "ACTIVE",
+        actionId: action.id
+      }
+    });
+
+    const updated = await this.prisma.assistantAction.update({
+      where: { id: action.id },
+      data: {
+        status: "APPLIED",
+        provider: result.provider,
+        calendarId: result.calendarId,
+        externalEventId: result.eventId,
+        result: result as unknown as Prisma.InputJsonValue,
+        error: null
+      }
+    });
+    return toAction(updated);
+  }
+
+  private async applyUpdateCalendarAction(action: PrismaAssistantAction): Promise<AssistantAction> {
+    if (
+      !action.externalEventId ||
+      !action.summary ||
+      !action.startDateTime ||
+      !action.endDateTime ||
+      !action.timeZone
+    ) {
+      throw new AssistantActionError(
+        "INCOMPLETE_CALENDAR_ACTION",
+        "Update calendar action is missing required fields.",
+        422
+      );
+    }
+
+    const result = await this.calendarService.updateEvent({
+      eventId: action.externalEventId,
+      event: {
+        summary: action.summary,
+        description: action.description ?? undefined,
+        startDateTime: action.startDateTime.toISOString(),
+        endDateTime: action.endDateTime.toISOString(),
+        timeZone: action.timeZone,
+        sourceType: action.sourceType as CalendarEventDraft["sourceType"],
+        sourceId: action.sourceId ?? undefined
+      }
+    });
+
+    await this.prisma.calendarEventLink.upsert({
+      where: {
+        provider_calendarId_externalEventId: {
+          provider: result.provider,
+          calendarId: result.calendarId,
+          externalEventId: result.eventId
+        }
+      },
+      update: {
+        summary: action.summary,
+        startDateTime: action.startDateTime,
+        endDateTime: action.endDateTime,
+        sourceType: action.sourceType,
+        sourceId: action.sourceId,
+        status: "ACTIVE",
+        actionId: action.id
+      },
+      create: {
         provider: result.provider,
         calendarId: result.calendarId,
         externalEventId: result.eventId,

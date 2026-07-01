@@ -52,6 +52,7 @@ enum AssistantMessageRole {
 
 enum AssistantActionType {
   CREATE_CALENDAR_EVENT
+  UPDATE_CALENDAR_EVENT
   DELETE_CALENDAR_EVENT
 }
 

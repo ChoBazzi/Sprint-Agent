@@ -192,6 +192,42 @@ export class GoogleCalendarService {
     };
   }
 
+  async updateEvent(input: {
+    eventId: string;
+    event: CalendarEventDraft;
+  }): Promise<CalendarExportResult> {
+    this.assertConfigured();
+    const token = await this.getUsableToken();
+    const response = await this.fetchImpl(
+      `${GOOGLE_CALENDAR_API_URL}/calendars/${encodeURIComponent(this.config.calendarId)}/events/${encodeURIComponent(input.eventId)}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token.accessToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(toGoogleEvent(input.event))
+      }
+    );
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new CalendarIntegrationError(
+        "GOOGLE_CALENDAR_EVENT_UPDATE_FAILED",
+        extractGoogleErrorMessage(payload),
+        response.status
+      );
+    }
+
+    const event = eventResponseSchema.parse(payload);
+    return {
+      provider: "google",
+      calendarId: this.config.calendarId,
+      eventId: event.id,
+      htmlLink: event.htmlLink
+    };
+  }
+
   async deleteEvent(input: { eventId: string }): Promise<void> {
     this.assertConfigured();
     const token = await this.getUsableToken();

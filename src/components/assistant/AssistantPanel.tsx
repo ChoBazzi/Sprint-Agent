@@ -199,7 +199,12 @@ function AssistantActionCard({
 }
 
 function formatActionType(type: AssistantAction["type"]): string {
-  return type === "create_calendar_event" ? "캘린더 추가" : "캘린더 삭제";
+  const labels: Record<AssistantAction["type"], string> = {
+    create_calendar_event: "캘린더 추가",
+    update_calendar_event: "캘린더 변경",
+    delete_calendar_event: "캘린더 삭제"
+  };
+  return labels[type];
 }
 
 function formatMessageRole(role: AssistantConversationDetail["messages"][number]["role"]): string {

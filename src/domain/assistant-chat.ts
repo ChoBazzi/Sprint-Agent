@@ -1,6 +1,9 @@
 export type AssistantMessageRole = "user" | "assistant" | "system";
 
-export type AssistantActionType = "create_calendar_event" | "delete_calendar_event";
+export type AssistantActionType =
+  | "create_calendar_event"
+  | "update_calendar_event"
+  | "delete_calendar_event";
 
 export type AssistantActionStatus =
   | "proposed"

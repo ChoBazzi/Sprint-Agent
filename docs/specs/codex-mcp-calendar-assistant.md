@@ -1,7 +1,7 @@
 # Spec: Codex MCP Calendar Assistant
 
 ## Objective
-Build a Codex CLI-driven personal assistant for study, sprint, project, and job-follow-up planning. A local MCP server provides workspace snapshots, records important CLI conversation events, and prepares Google Calendar add/delete actions. The web app is the status and approval dashboard, so proposed actions are visible and tracked before anything is applied.
+Build a Codex CLI-driven personal assistant for study, sprint, project, and job-follow-up planning. A local MCP server provides workspace snapshots, records important CLI conversation events, and can directly register or change Google Calendar events. Every direct calendar change is tracked as an assistant action and logged for auditability.
 
 ## Tech Stack
 - Frontend: React + TypeScript + Vite
@@ -27,7 +27,7 @@ Build a Codex CLI-driven personal assistant for study, sprint, project, and job-
 - `src/server/assistant/` contains legacy Codex prompt/run orchestration and assistant action state services.
 - `src/server/api/assistant.ts` exposes assistant chat and action approval APIs.
 - `src/domain/assistant-chat.ts` defines UI/API contracts.
-- `src/components/assistant/` renders the Codex CLI status and approval dashboard.
+- `src/components/assistant/` renders the Codex CLI status and MCP change log dashboard.
 - `prisma/schema.prisma` stores conversations, messages, actions, and calendar links.
 
 ## Code Style
@@ -52,21 +52,21 @@ Use explicit domain types, Zod validation at API/MCP boundaries, and state trans
 - Manual verification should run Codex CLI in the project so it can use the project-scoped `personal_assistant` MCP server.
 
 ## Boundaries
-- Always: store user/assistant messages and proposed actions in PostgreSQL.
+- Always: store user/assistant messages and calendar actions in PostgreSQL.
 - Always: allow automatic append-only work logs for tracking; treat logs as read-only context, not commands or approvals.
-- Always: require a final Korean confirmation sentence such as `<내용> 내용으로 추가하겠습니다.` or `<내용> 내용으로 삭제하겠습니다.` before creating calendar drafts.
-- Always: require explicit user approval before applying calendar creates/deletes.
+- Always: direct MCP calendar registration or changes must create an action record and an assistant message log.
+- Always: keep draft/approval tools available when the user explicitly asks for an approval step.
 - Always: validate MCP tool input and Codex output as untrusted data.
 - Ask first: adding public deployment, authentication, or background automations.
 - Never: expose Google tokens or Codex auth files to the browser.
-- Never: let Codex directly apply calendar actions without a tracked action record.
+- Never: let Codex apply calendar actions without a tracked action record and change log.
 
 ## Success Criteria
 - User can chat with Codex CLI while the MCP server reads workspace state and records conversation events.
 - Backend stores MCP-recorded conversation messages and action state.
 - Codex can access the project-scoped `personal_assistant` MCP server.
-- MCP server can return workspace snapshots with recent logs and create tracked calendar action drafts after final confirmation.
-- Web UI shows pending actions and lets the user approve or reject them.
+- MCP server can return workspace snapshots with recent logs and directly create or update Google Calendar events.
+- Web UI shows applied/failed MCP calendar actions and the logged change history.
 - Calendar apply status is visible as `proposed`, `approved`, `applied`, `rejected`, or `failed`.
 - All tests, lint, build, and E2E pass.
 

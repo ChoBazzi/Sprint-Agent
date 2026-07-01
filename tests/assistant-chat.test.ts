@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildChatPrompt } from "../src/server/assistant/chat-runner";
 
 describe("buildChatPrompt", () => {
-  it("instructs Codex to use tracked MCP calendar drafts", () => {
+  it("instructs Codex to use direct MCP calendar tools with change logs", () => {
     const prompt = buildChatPrompt({
       conversationId: "conversation-1",
       userMessage: "내일 오전 네트워크 공부 2시간 캘린더에 잡아줘",
@@ -27,9 +27,9 @@ describe("buildChatPrompt", () => {
     });
 
     expect(prompt).toContain("conversation-1");
-    expect(prompt).toContain("create_calendar_event_draft");
-    expect(prompt).toContain("내용으로 추가하겠습니다");
-    expect(prompt).toContain("Never call apply_approved_calendar_action unless the action is already approved.");
+    expect(prompt).toContain("create_calendar_event");
+    expect(prompt).toContain("update_calendar_event");
+    expect(prompt).toContain("change log");
     expect(prompt).toContain("Recent conversation");
   });
 });
