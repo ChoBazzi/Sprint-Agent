@@ -15,11 +15,12 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:demo": "ALLOW_DEMO_SEED=1 tsx prisma/seed.ts",
     "db:backup": "bash scripts/backup-postgres.sh",
     "db:restore": "bash scripts/restore-postgres.sh",
     "mcp:calendar": "tsx src/mcp/calendar-server.ts",
     "mcp:assistant": "tsx src/mcp/calendar-server.ts",
-    "test:e2e": "npm run db:seed && playwright test"
+    "test:e2e": "bash scripts/run-e2e.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

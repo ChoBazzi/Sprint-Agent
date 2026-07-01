@@ -8,6 +8,8 @@ import {
 const prisma = new PrismaClient();
 
 async function main() {
+  assertDemoSeedAllowed();
+
   const today = toDateOnly(new Date());
   const inTwoDays = addDays(today, 2);
   const inFourDays = addDays(today, 4);
@@ -134,6 +136,22 @@ async function main() {
       }
     ]
   });
+}
+
+function assertDemoSeedAllowed(): void {
+  if (process.env.ALLOW_DEMO_SEED === "1") {
+    return;
+  }
+
+  console.error(
+    [
+      "Refusing to write demo seed data to DATABASE_URL.",
+      "This seed creates an active sample sprint and is not safe for a personal database.",
+      "Run `npm run db:seed:demo` only when you intentionally want demo data.",
+      "For Playwright, set E2E_DATABASE_URL to an isolated test database."
+    ].join("\n")
+  );
+  process.exit(1);
 }
 
 function toDate(value: string): Date {

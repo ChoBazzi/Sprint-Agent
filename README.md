@@ -9,7 +9,6 @@ npm install
 cp .env.example .env
 npm run db:up
 npm run db:migrate
-npm run db:seed
 npm run dev
 ```
 
@@ -22,11 +21,12 @@ npm run dev
 | `npm run dev` | Vite 프론트엔드와 Express API를 함께 실행 |
 | `npm run build` | 서버 TypeScript와 프론트엔드 프로덕션 빌드 실행 |
 | `npm run test` | Vitest 단위/통합 테스트 실행 |
-| `npm run test:e2e` | seed 데이터를 넣은 뒤 Playwright 브라우저 테스트 실행 |
+| `npm run test:e2e` | `E2E_DATABASE_URL`에 지정한 격리 테스트 DB에서 Playwright 브라우저 테스트 실행 |
 | `npm run lint` | 프론트엔드/서버 TypeScript 타입 검사 |
 | `npm run db:up` | Docker Compose PostgreSQL 시작 |
 | `npm run db:migrate` | Prisma 마이그레이션 적용 |
-| `npm run db:seed` | 샘플 Sprint, 지원건, 공부, 프로젝트 데이터 생성 |
+| `npm run db:seed` | 보호 장치가 있는 seed 진입점. 기본 개인 DB에는 쓰지 않음 |
+| `npm run db:seed:demo` | 의도적으로 샘플 Sprint, 공부, 프로젝트 데이터를 생성 |
 | `npm run db:backup` | `backups/`에 PostgreSQL custom dump 생성 |
 | `npm run db:restore -- backups/<file>.dump` | dump 파일에서 PostgreSQL 복구 |
 | `npm run db:studio` | Prisma Studio 실행 |
@@ -117,6 +117,18 @@ OAuth 토큰 파일은 Git이 무시하는 `private/` 아래에 저장합니다.
 ## 데이터 경계
 
 이 저장소는 코드와 샘플 데이터만 포함할 때만 공개해도 안전합니다. `.env`, 데이터베이스 dump, 실제 이력서, 개인 지원 메모, 토큰, Codex 인증 파일, 로컬 백업은 커밋하지 마세요. push 전 확인 목록은 [docs/security/git-data-boundary.md](docs/security/git-data-boundary.md)를 참고하세요.
+
+## 테스트 데이터 주의
+
+`prisma/seed.ts`는 활성 샘플 Sprint를 만드는 demo seed입니다. 개인 일정 DB에 실수로 샘플 Sprint가 생기지 않도록 `ALLOW_DEMO_SEED=1`이 없으면 실행을 거부합니다.
+
+Playwright e2e는 반드시 별도 테스트 DB를 사용합니다.
+
+```bash
+E2E_DATABASE_URL="postgresql://jobprep:jobprep@127.0.0.1:5432/jobprep?schema=e2e" npm run test:e2e
+```
+
+이 명령은 `E2E_DATABASE_URL` 대상에만 Prisma schema를 push하고 demo seed를 넣습니다. e2e 서버는 기본 앱 포트와 분리된 `3002`, `5175`를 사용합니다.
 
 ## 문서
 
