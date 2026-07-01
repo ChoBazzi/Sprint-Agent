@@ -60,7 +60,7 @@ describe("applications API", () => {
 
     const created = await invokeRoute<JobApplication>(router, "post", "/applications", {
       body: {
-        company: "Wanted Labs",
+        company: "Sample Backend Co",
         role: "Backend Developer",
         status: "preparing",
         deadline: todayPlusDays(2),
@@ -88,7 +88,7 @@ describe("applications API", () => {
     expect(patched.statusCode).toBe(200);
     expect(patched.body.data).toMatchObject({
       id: created.body.data.id,
-      company: "Wanted Labs",
+      company: "Sample Backend Co",
       role: "Backend Developer",
       status: "applied",
       nextAction: "",
@@ -101,7 +101,7 @@ describe("applications API", () => {
 function makeApplication(overrides: Partial<JobApplication> = {}): JobApplication {
   return {
     id: "app-1",
-    company: "Wanted Labs",
+    company: "Sample Backend Co",
     role: "Backend Developer",
     status: "preparing",
     ...overrides

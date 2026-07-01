@@ -13,7 +13,7 @@ test("renders seeded workspace data", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "달력" })).toBeVisible();
   const calendarGrid = page.getByRole("grid", { name: /달력/ });
   await expect(calendarGrid).toBeVisible();
-  await expect(calendarGrid.getByText("Wanted Labs")).toBeVisible();
+  await expect(calendarGrid.getByText("네트워크 면접 질문", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Google Calendar Handoff" })).toBeVisible();
   await expect(page.getByText(/환경 설정 필요|미연결|연결됨/)).toBeVisible();
 

@@ -13,7 +13,7 @@ describe("ApplicationService", () => {
     });
 
     const application = await service.createJobApplication({
-      company: "Wanted Labs",
+      company: "Sample Backend Co",
       role: "Backend Developer",
       status: "preparing",
       deadline: "2026-06-30",
@@ -22,7 +22,7 @@ describe("ApplicationService", () => {
     });
 
     await service.createJobApplication({
-      company: "Saramin",
+      company: "Sample Web Co",
       role: "Junior Developer",
       status: "interested"
     });
@@ -33,7 +33,7 @@ describe("ApplicationService", () => {
     expect(applications).toHaveLength(2);
     expect(applications[0]).toMatchObject({
       id: application.id,
-      company: "Wanted Labs",
+      company: "Sample Backend Co",
       resumeVersionName: "백엔드 지원용 v1"
     });
     expect(resumeVersions).toEqual([resumeVersion]);
@@ -43,7 +43,7 @@ describe("ApplicationService", () => {
     const service = createApplicationService(new InMemoryApplicationRepository());
 
     const application = await service.createJobApplication({
-      company: "Wanted Labs",
+      company: "Sample Backend Co",
       role: "Backend Developer",
       status: "preparing",
       deadline: "2026-06-30",
@@ -59,7 +59,7 @@ describe("ApplicationService", () => {
 
     expect(updated).toMatchObject({
       id: application.id,
-      company: "Wanted Labs",
+      company: "Sample Backend Co",
       role: "Backend Developer",
       status: "applied",
       deadline: "2026-06-30",

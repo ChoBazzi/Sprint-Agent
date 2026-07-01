@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 import {
-  ApplicationStatus,
   ProjectStatus,
   StudyStatus,
   WorkItemStatus
@@ -92,37 +91,6 @@ async function main() {
         ]
       }
     }
-  });
-
-  const resume = await prisma.resumeVersion.create({
-    data: {
-      id: "seed-resume-backend-v1",
-      name: "백엔드 지원용 v1",
-      targetRole: "Node.js Backend Developer",
-      changeNotes: "프로젝트 API 설계와 PostgreSQL 경험을 강조"
-    }
-  });
-
-  await prisma.jobApplication.createMany({
-    data: [
-      {
-        id: "seed-application-wanted",
-        company: "Wanted Labs",
-        role: "Backend Developer",
-        status: ApplicationStatus.PREPARING,
-        deadline: toDate(inTwoDays),
-        nextAction: "공고 요구사항과 이력서 프로젝트 섹션 대조",
-        resumeVersionId: resume.id
-      },
-      {
-        id: "seed-application-saramin",
-        company: "Saramin",
-        role: "Junior Web Developer",
-        status: ApplicationStatus.INTERESTED,
-        deadline: toDate(inFourDays),
-        resumeVersionId: resume.id
-      }
-    ]
   });
 
   await prisma.studyItem.createMany({

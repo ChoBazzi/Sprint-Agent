@@ -48,7 +48,7 @@ describe("buildDailyPlanPrompt", () => {
         workItems: [
           makeWorkItem({
             id: "work-1",
-            title: "원티드 지원서 정리",
+            title: "샘플 지원서 정리",
             area: "application",
             status: "planned",
             dueDate: "2026-06-29"
@@ -58,7 +58,7 @@ describe("buildDailyPlanPrompt", () => {
       applications: [
         {
           id: "application-1",
-          company: "Wanted Labs",
+          company: "Sample Backend Co",
           role: "Backend Developer",
           status: "preparing",
           deadline: "2026-06-29",
@@ -99,8 +99,8 @@ describe("buildDailyPlanPrompt", () => {
     });
 
     expect(prompt).toContain("6월 마지막 Sprint");
-    expect(prompt).toContain("원티드 지원서 정리");
-    expect(prompt).toContain("Wanted Labs");
+    expect(prompt).toContain("샘플 지원서 정리");
+    expect(prompt).toContain("Sample Backend Co");
     expect(prompt).toContain("백엔드 지원용 v1");
     expect(prompt).toContain("네트워크 면접 질문");
     expect(prompt).toContain("Job Prep Assistant");
@@ -153,7 +153,7 @@ describe("createStubDailyPlan", () => {
       applications: [
         {
           id: "application-1",
-          company: "Wanted Labs",
+          company: "Sample Backend Co",
           role: "Backend Developer",
           status: "preparing",
           deadline: "2026-06-29"
@@ -166,7 +166,7 @@ describe("createStubDailyPlan", () => {
 
     expect(response.summary).toContain("지원");
     expect(response.suggestions[0].affectedItemIds).toEqual(["application-1"]);
-    expect(response.suggestions[0].title).toContain("Wanted Labs");
+    expect(response.suggestions[0].title).toContain("Sample Backend Co");
   });
 
   it("uses study and project context when no application is urgent", () => {

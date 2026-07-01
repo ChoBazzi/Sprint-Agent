@@ -13,7 +13,7 @@ describe("createCodexDailyPlan", () => {
         applications: [
           {
             id: "application-1",
-            company: "Wanted Labs",
+            company: "Sample Backend Co",
             role: "Backend Developer",
             status: "preparing",
             deadline: "2026-06-30"
@@ -25,13 +25,13 @@ describe("createCodexDailyPlan", () => {
       },
       {
         runCodex: async ({ prompt }) => {
-          expect(prompt).toContain("Wanted Labs");
+          expect(prompt).toContain("Sample Backend Co");
           return JSON.stringify({
             summary: "지원 마감을 먼저 처리하세요.",
             suggestions: [
               {
                 id: "codex-1",
-                title: "Wanted Labs 지원 마감 대응",
+                title: "Sample Backend Co 지원 마감 대응",
                 rationale: "마감이 가까워 오늘 처리해야 합니다.",
                 suggestedActions: ["공고 요구사항과 이력서를 대조하세요."],
                 affectedItemIds: ["application-1"],

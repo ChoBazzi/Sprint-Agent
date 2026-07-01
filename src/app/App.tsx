@@ -6,7 +6,6 @@ import { DailyCommandCenter } from "../components/dashboard/DailyCommandCenter";
 import { SprintBoard } from "../components/sprint/SprintBoard";
 import type { AssistantConversationDetail } from "../domain/assistant-chat";
 import type { CalendarExportResult, CalendarProviderStatus } from "../domain/calendar";
-import type { JobApplication } from "../domain/applications";
 import type { PortfolioProject } from "../domain/projects";
 import type { StudyItem } from "../domain/study";
 import type { Sprint, WorkItemStatus } from "../domain/sprint";
@@ -25,7 +24,6 @@ import {
   getAssistantConversation,
   getGoogleCalendarAuthUrl,
   getGoogleCalendarStatus,
-  listJobApplications,
   listAssistantConversations,
   listProjects,
   listStudyItems,
@@ -46,7 +44,6 @@ import {
 
 export function App() {
   const [sprint, setSprint] = useState<Sprint | null>(null);
-  const [applications, setApplications] = useState<JobApplication[]>([]);
   const [studyItems, setStudyItems] = useState<StudyItem[]>([]);
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,14 +59,12 @@ export function App() {
     setError(null);
 
     try {
-      const [activeSprint, jobApplications, studyItemList, projectList] = await Promise.all([
+      const [activeSprint, studyItemList, projectList] = await Promise.all([
         getActiveSprint(),
-        listJobApplications(),
         listStudyItems(),
         listProjects()
       ]);
       setSprint(activeSprint);
-      setApplications(jobApplications);
       setStudyItems(studyItemList);
       setProjects(projectList);
     } catch {
@@ -312,7 +307,6 @@ export function App() {
     <main className="app-shell">
       <DailyCommandCenter
         sprint={sprint}
-        applications={applications}
         studyItems={studyItems}
         projects={projects}
         isLoading={isLoading}
@@ -339,7 +333,6 @@ export function App() {
           <div className="calendar-workspace">
             <CalendarBoard
               sprint={sprint}
-              applications={applications}
               studyItems={studyItems}
               assistantActions={assistantDetail?.actions ?? []}
             />

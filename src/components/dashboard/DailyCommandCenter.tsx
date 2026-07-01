@@ -1,8 +1,3 @@
-import {
-  getApplicationsMissingNextAction,
-  getDueSoonApplications,
-  type JobApplication
-} from "../../domain/applications";
 import type { PortfolioProject } from "../../domain/projects";
 import { getDailyRecommendations } from "../../domain/recommendations";
 import type { Sprint } from "../../domain/sprint";
@@ -10,7 +5,6 @@ import type { StudyItem } from "../../domain/study";
 
 type DailyCommandCenterProps = {
   sprint: Sprint | null;
-  applications: JobApplication[];
   studyItems: StudyItem[];
   projects: PortfolioProject[];
   isLoading: boolean;
@@ -20,7 +14,6 @@ type DailyCommandCenterProps = {
 
 export function DailyCommandCenter({
   sprint,
-  applications,
   studyItems,
   projects,
   isLoading,
@@ -31,36 +24,20 @@ export function DailyCommandCenter({
   const recommendations = sprint
     ? getDailyRecommendations(sprint.workItems, today).slice(0, 5)
     : [];
-  const dueApplications = getDueSoonApplications(applications, today, 3);
-  const missingNextActionApplications = getApplicationsMissingNextAction(applications);
-  const jobFollowUpCount = new Set([
-    ...dueApplications.map((application) => application.id),
-    ...missingNextActionApplications.map((application) => application.id)
-  ]).size;
   const dueStudyItems = getDueStudyItems(studyItems, today, 3);
   const portfolioGaps = getPortfolioGaps(projects);
-  const blockedCount = sprint?.workItems.filter((item) => item.status === "blocked").length ?? 0;
+  const blockedItems = sprint?.workItems.filter((item) => item.status === "blocked") ?? [];
+  const blockedCount = blockedItems.length;
   const activeCount =
     sprint?.workItems.filter((item) => item.status === "planned" || item.status === "in_progress")
       .length ?? 0;
-  const alertCount =
-    dueApplications.length +
-    missingNextActionApplications.length +
-    dueStudyItems.length +
-    portfolioGaps.length;
+  const alertCount = blockedItems.length + dueStudyItems.length + portfolioGaps.length;
   const alerts = [
-    ...dueApplications.map((application) => ({
-      id: `due-${application.id}`,
-      title: application.company,
-      body: `${application.deadline} 마감, ${application.nextAction || "다음 액션 미정"}`
+    ...blockedItems.map((item) => ({
+      id: `blocked-${item.id}`,
+      title: item.title,
+      body: item.blocker ? `막힘: ${item.blocker}` : "막힌 이유를 정리해야 합니다."
     })),
-    ...missingNextActionApplications
-      .filter((application) => !dueApplications.some((due) => due.id === application.id))
-      .map((application) => ({
-        id: `action-${application.id}`,
-        title: application.company,
-        body: `${application.role} 다음 액션을 정해야 합니다.`
-      })),
     ...dueStudyItems.map((item) => ({
       id: `study-${item.id}`,
       title: item.topic,
@@ -143,12 +120,9 @@ export function DailyCommandCenter({
       <article className="panel alert-panel">
         <div className="panel-header">
           <h2>주의할 것</h2>
-          <span className="subtle">{alertCount} alerts</span>
+          <span className="subtle">{alertCount}개</span>
         </div>
-        {dueApplications.length > 0 ||
-        missingNextActionApplications.length > 0 ||
-        dueStudyItems.length > 0 ||
-        portfolioGaps.length > 0 ? (
+        {alerts.length > 0 ? (
           <ol className="focus-list">
             {alerts.map((alert) => (
               <li key={alert.id}>
@@ -158,7 +132,7 @@ export function DailyCommandCenter({
             ))}
           </ol>
         ) : (
-          <p className="empty-copy">공부, 프로젝트, 지원 후속 행동이 안정적입니다.</p>
+          <p className="empty-copy">공부와 프로젝트 흐름이 안정적입니다.</p>
         )}
       </article>
       </div>

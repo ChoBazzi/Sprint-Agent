@@ -1,17 +1,15 @@
 import { useMemo, useState } from "react";
-import type { JobApplication } from "../../domain/applications";
 import type { AssistantAction } from "../../domain/assistant-chat";
 import type { Sprint } from "../../domain/sprint";
 import type { StudyItem } from "../../domain/study";
 
 type CalendarBoardProps = {
   sprint: Sprint | null;
-  applications: JobApplication[];
   studyItems: StudyItem[];
   assistantActions: AssistantAction[];
 };
 
-type CalendarEventTone = "sprint" | "study" | "application" | "calendar";
+type CalendarEventTone = "sprint" | "study" | "calendar";
 
 type CalendarEvent = {
   id: string;
@@ -25,14 +23,13 @@ const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
 
 export function CalendarBoard({
   sprint,
-  applications,
   studyItems,
   assistantActions
 }: CalendarBoardProps) {
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
   const events = useMemo(
-    () => buildCalendarEvents({ sprint, applications, studyItems, assistantActions }),
-    [sprint, applications, studyItems, assistantActions]
+    () => buildCalendarEvents({ sprint, studyItems, assistantActions }),
+    [sprint, studyItems, assistantActions]
   );
   const monthDays = useMemo(() => buildMonthGrid(visibleMonth), [visibleMonth]);
   const eventsByDate = useMemo(() => groupEventsByDate(events), [events]);
@@ -48,7 +45,7 @@ export function CalendarBoard({
       <div className="section-heading">
         <div>
           <h2 id="calendar-board-title">달력</h2>
-          <p>마감일, 공부 목표, MCP 캘린더 초안을 월간 보기로 확인합니다.</p>
+          <p>작업 마감일, 공부 목표, MCP 캘린더 초안을 월간 보기로 확인합니다.</p>
         </div>
         <div className="calendar-board-controls">
           <button type="button" className="button-secondary" onClick={() => moveMonth(-1)}>
@@ -119,7 +116,6 @@ export function CalendarBoard({
 
 function buildCalendarEvents({
   sprint,
-  applications,
   studyItems,
   assistantActions
 }: CalendarBoardProps): CalendarEvent[] {
@@ -133,16 +129,6 @@ function buildCalendarEvents({
         meta: `${formatWorkArea(item.area)} · ${formatPriority(item.priority)}`,
         tone: "sprint" as const
       })) ?? [];
-
-  const applicationEvents = applications
-    .filter((application) => application.deadline)
-    .map((application) => ({
-      id: `application-${application.id}`,
-      date: application.deadline as string,
-      title: application.company,
-      meta: `${application.role} 마감`,
-      tone: "application" as const
-    }));
 
   const studyEvents = studyItems.flatMap((item) => {
     const events: CalendarEvent[] = [];
@@ -179,7 +165,6 @@ function buildCalendarEvents({
 
   return [
     ...sprintEvents,
-    ...applicationEvents,
     ...studyEvents,
     ...assistantCalendarEvents
   ].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
