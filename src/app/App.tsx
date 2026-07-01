@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AssistantPanel } from "../components/assistant/AssistantPanel";
+import { CalendarBoard } from "../components/calendar/CalendarBoard";
 import { CalendarHandoffPanel } from "../components/calendar/CalendarHandoffPanel";
 import { DailyCommandCenter } from "../components/dashboard/DailyCommandCenter";
 import { ProjectTracker } from "../components/projects/ProjectTracker";
@@ -46,7 +47,7 @@ import {
 type WorkspaceTab = "sprint" | "study" | "projects" | "calendar";
 
 const workspaceTabs: Array<{ id: WorkspaceTab; label: string }> = [
-  { id: "sprint", label: "Sprint" },
+  { id: "sprint", label: "Kanban" },
   { id: "study", label: "Study" },
   { id: "projects", label: "Projects" },
   { id: "calendar", label: "Calendar" }
@@ -364,13 +365,21 @@ export function App() {
             />
           ) : null}
           {activeWorkspaceTab === "calendar" ? (
-            <CalendarHandoffPanel
-              status={calendarStatus}
-              result={calendarResult}
-              isLoading={isCalendarLoading}
-              onConnect={handleConnectGoogleCalendar}
-              onCreateEvent={handleCreateGoogleCalendarEvent}
-            />
+            <div className="calendar-workspace">
+              <CalendarBoard
+                sprint={sprint}
+                applications={applications}
+                studyItems={studyItems}
+                assistantActions={assistantDetail?.actions ?? []}
+              />
+              <CalendarHandoffPanel
+                status={calendarStatus}
+                result={calendarResult}
+                isLoading={isCalendarLoading}
+                onConnect={handleConnectGoogleCalendar}
+                onCreateEvent={handleCreateGoogleCalendarEvent}
+              />
+            </div>
           ) : null}
         </div>
       </section>

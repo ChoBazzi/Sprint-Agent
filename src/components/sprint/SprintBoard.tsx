@@ -54,14 +54,14 @@ export function SprintBoard({
   return (
     <section className="section-stack" aria-labelledby="sprint-title">
       <div className="section-heading">
-        <h2 id="sprint-title">Sprint Board</h2>
-        <p>이번 Sprint의 작업을 상태별로 관리합니다.</p>
+        <h2 id="sprint-title">Kanban Board</h2>
+        <p>이번 Sprint의 작업을 진행 흐름별로 관리합니다.</p>
       </div>
 
       {sprint ? (
         <>
           <WorkItemForm onSubmit={onCreateWorkItem} />
-          <div className="board" role="list" aria-label="Sprint work item board">
+          <div className="board" role="list" aria-label="Kanban board">
             {visibleStatuses.map((status) => (
               <section className="board-column" key={status.value} aria-labelledby={`${status.value}-title`}>
                 <div className="column-title">
