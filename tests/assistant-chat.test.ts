@@ -28,6 +28,7 @@ describe("buildChatPrompt", () => {
 
     expect(prompt).toContain("conversation-1");
     expect(prompt).toContain("create_calendar_event_draft");
+    expect(prompt).toContain("내용으로 추가하겠습니다");
     expect(prompt).toContain("Never call apply_approved_calendar_action unless the action is already approved.");
     expect(prompt).toContain("Recent conversation");
   });

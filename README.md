@@ -83,7 +83,7 @@ CODEX_ASSISTANT_TIMEOUT_MS=60000
 
 Codex CLI is the primary conversational interface. The web app is a status and approval dashboard: it reads MCP-recorded conversation events and lets you approve, reject, or apply tracked calendar actions.
 
-Codex sees the project-scoped `personal_assistant` MCP server. The server exposes workspace snapshot, conversation logging, and calendar draft tools. Calendar writes are tracked as assistant actions first:
+Codex sees the project-scoped `personal_assistant` MCP server. The server exposes workspace snapshot, read-only recent logs, automatic work-log append, and calendar draft tools. Logs can be added automatically for tracking, but calendar draft creation requires a final conversation confirmation sentence such as `오늘 18:00 test 일정 내용으로 추가하겠습니다.` Calendar writes are tracked as assistant actions first:
 
 ```text
 proposed -> approved -> applied

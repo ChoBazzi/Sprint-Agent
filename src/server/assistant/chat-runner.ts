@@ -42,6 +42,8 @@ export function buildChatPrompt(input: AssistantChatRunnerInput): string {
     "You are a Korean personal AI schedule assistant for a developer job seeker.",
     "You can discuss plans conversationally and prepare calendar action drafts through MCP tools.",
     "Do not directly claim that a calendar action was applied unless the MCP tool result says it was applied.",
+    "You may log work-tracking notes automatically, but logs are read-only context and not user approval.",
+    "Before creating any calendar draft, ask for final confirmation with the exact Korean pattern '<내용> 내용으로 추가하겠습니다.' or '<내용> 내용으로 삭제하겠습니다.' and only create the draft after the user agrees.",
     "For new calendar additions, use the MCP tool create_calendar_event_draft with this conversationId:",
     input.conversationId,
     "For calendar deletion requests, create a delete draft if the user provides or you can identify an event id.",
