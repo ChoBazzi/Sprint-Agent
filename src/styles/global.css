@@ -320,11 +320,6 @@ h2 {
   align-items: end;
 }
 
-.study-form,
-.project-form {
-  grid-template-columns: minmax(180px, 1fr) minmax(160px, 0.8fr) 150px 130px auto;
-}
-
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -392,6 +387,35 @@ button:hover {
   gap: 12px;
 }
 
+.board-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.board-summary span {
+  padding: 6px 8px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.quick-create-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.quick-create-grid .compact-form {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  padding: 14px;
+}
+
 .board-column {
   display: grid;
   align-content: start;
@@ -427,6 +451,109 @@ button:hover {
   border: 1px solid #dbe3ef;
   border-radius: 8px;
   background: #ffffff;
+  cursor: grab;
+}
+
+.task-card:active {
+  cursor: grabbing;
+}
+
+.task-card button {
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
+.task-card-work {
+  border-left: 3px solid #2563eb;
+}
+
+.task-card-study {
+  border-left: 3px solid #16a34a;
+}
+
+.task-card-project {
+  border-left: 3px solid #0891b2;
+}
+
+.task-card-title {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.task-card-title strong {
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.task-type {
+  display: inline-flex;
+  width: fit-content;
+  padding: 2px 6px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.6875rem;
+  font-weight: 800;
+}
+
+.detail-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.36);
+}
+
+.detail-panel {
+  display: grid;
+  gap: 16px;
+  width: min(100%, 640px);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.detail-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.detail-panel-header div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.detail-panel-header h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.125rem;
+  overflow-wrap: anywhere;
+}
+
+.detail-form {
+  display: grid;
+  gap: 14px;
+}
+
+.detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.detail-copy {
+  margin: 0;
+  color: #475569;
 }
 
 .task-card-controls,
@@ -446,41 +573,6 @@ button:hover {
 .task-card input,
 .task-card select {
   min-height: 36px;
-}
-
-.dense-list {
-  display: grid;
-  gap: 10px;
-}
-
-.dense-row {
-  display: grid;
-  grid-template-columns: minmax(190px, 1.3fr) 130px 100px 130px 150px 84px;
-  gap: 12px;
-  align-items: center;
-  padding: 14px;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.dense-row div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.dense-row strong,
-.project-card strong {
-  color: #0f172a;
-  overflow-wrap: anywhere;
-}
-
-.dense-row span,
-.project-card span {
-  color: #64748b;
-  font-size: 0.875rem;
-  overflow-wrap: anywhere;
 }
 
 .status-pill {
@@ -713,40 +805,6 @@ button:hover {
   font-weight: 700;
 }
 
-.project-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.project-card {
-  display: grid;
-  gap: 14px;
-  align-content: start;
-  padding: 16px;
-  border: 1px solid #dbe3ef;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.project-card-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px;
-  gap: 12px;
-  align-items: start;
-}
-
-.project-card-header div {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.project-card p {
-  margin: 0;
-  color: #475569;
-}
-
 .readiness-list {
   display: flex;
   flex-wrap: wrap;
@@ -918,13 +976,12 @@ button:hover {
   .metric-grid,
   .form-row,
   .compact-form,
+  .quick-create-grid,
   .calendar-form,
   .execution-grid,
   .assistant-chat-layout,
   .assistant-action-buttons,
-  .dense-row,
-  .project-grid,
-  .project-card-header {
+  .board-summary {
     grid-template-columns: 1fr;
   }
 }

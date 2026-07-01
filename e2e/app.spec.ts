@@ -7,27 +7,20 @@ test.beforeEach(async ({ page }) => {
 
 test("renders seeded workspace data", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "지금 먼저 할 일" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "Kanban", selected: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Kanban Board" })).toBeVisible();
-
-  await page.getByRole("tab", { name: "Study" }).click();
-  await expect(page.getByRole("list", { name: "Study items" }).getByText("네트워크 면접 질문")).toBeVisible();
-
-  await page.getByRole("tab", { name: "Projects" }).click();
-  await expect(
-    page.getByRole("list", { name: "Portfolio projects" }).getByText("Developer Job-Prep Assistant")
-  ).toBeVisible();
-
   await expect(page.getByRole("heading", { name: "Application Tracker" })).toHaveCount(0);
   await expect(page.getByRole("list", { name: "Job applications" })).toHaveCount(0);
 
-  await page.getByRole("tab", { name: "Calendar" }).click();
   await expect(page.getByRole("heading", { name: "달력" })).toBeVisible();
   const calendarGrid = page.getByRole("grid", { name: /달력/ });
   await expect(calendarGrid).toBeVisible();
   await expect(calendarGrid.getByText("Wanted Labs")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Google Calendar Handoff" })).toBeVisible();
   await expect(page.getByText(/환경 설정 필요|미연결|연결됨/)).toBeVisible();
+
+  await expect(page.getByRole("heading", { name: "Kanban Board" })).toBeVisible();
+  const kanbanBoard = page.getByRole("list", { name: "Kanban board" });
+  await expect(kanbanBoard.getByText("네트워크 면접 질문", { exact: true })).toBeVisible();
+  await expect(kanbanBoard.getByText("Developer Job-Prep Assistant")).toBeVisible();
 });
 
 test("creates, edits, and deletes a sprint work item", async ({ page }) => {
@@ -36,52 +29,57 @@ test("creates, edits, and deletes a sprint work item", async ({ page }) => {
   const sprintSection = page
     .locator("section")
     .filter({ has: page.getByRole("heading", { name: "Kanban Board" }) });
-  const createForm = sprintSection.locator("form.compact-form");
+  const createForm = sprintSection.getByRole("form", { name: "Sprint 작업 추가" });
 
   await createForm.getByLabel("작업명").fill(title);
   await createForm.getByLabel("영역").selectOption("project");
-  await createForm.getByLabel("우선순위").selectOption("3");
   await createForm.getByRole("button", { name: "작업 추가" }).click();
 
-  const statusSelect = sprintSection.getByRole("combobox", { name: `${title} 상태 변경` });
-  const card = statusSelect.locator("xpath=ancestor::article[contains(@class, 'task-card')]");
+  const card = sprintSection.locator("article.task-card").filter({ hasText: title });
   await expect(card).toBeVisible();
 
-  await card.getByLabel("작업명").fill(updatedTitle);
-  await card.getByLabel("우선순위").selectOption("1");
-  await card.getByRole("button", { name: "저장" }).click();
+  const inProgressColumn = sprintSection
+    .locator("section.board-column")
+    .filter({ has: page.getByRole("heading", { name: "In Progress" }) });
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+  await card.dispatchEvent("dragstart", { dataTransfer });
+  await inProgressColumn.dispatchEvent("dragover", { dataTransfer });
+  await inProgressColumn.dispatchEvent("drop", { dataTransfer });
+  await card.dispatchEvent("dragend", { dataTransfer });
+  await expect(inProgressColumn.getByText(title)).toBeVisible();
 
-  const updatedStatusSelect = sprintSection.getByRole("combobox", {
-    name: `${updatedTitle} 상태 변경`
-  });
-  const updatedCard = updatedStatusSelect.locator("xpath=ancestor::article[contains(@class, 'task-card')]");
+  await inProgressColumn.locator("article.task-card").filter({ hasText: title }).getByRole("button", { name: "자세히" }).click();
+  const dialog = page.getByRole("dialog", { name: new RegExp(title) });
+  await dialog.getByLabel("작업명").fill(updatedTitle);
+  await dialog.getByLabel("우선순위").selectOption("1");
+  await dialog.getByRole("button", { name: "저장" }).click();
+
+  const updatedCard = sprintSection.locator("article.task-card").filter({ hasText: updatedTitle });
   await expect(updatedCard).toBeVisible();
 
-  await updatedCard.getByRole("button", { name: "삭제" }).click();
+  await updatedCard.getByRole("button", { name: "자세히" }).click();
+  await page.getByRole("dialog", { name: new RegExp(updatedTitle) }).getByRole("button", { name: "삭제" }).click();
   await expect(updatedCard).toHaveCount(0);
 });
 
 test("creates study and project items, then verifies the assistant status board", async ({ page }) => {
   const study = `E2E Study ${Date.now()}`;
-  await page.getByRole("tab", { name: "Study" }).click();
-  const studySection = page
+  const kanbanSection = page
     .locator("section")
-    .filter({ has: page.getByRole("heading", { name: "Study Planner" }) });
+    .filter({ has: page.getByRole("heading", { name: "Kanban Board" }) });
+  const studyForm = kanbanSection.getByRole("form", { name: "공부 항목 추가" });
 
-  await studySection.locator("form").getByLabel("주제").fill(study);
-  await studySection.locator("form").getByRole("button", { name: "공부 추가" }).click();
-  await expect(studySection.getByText(study)).toBeVisible();
+  await studyForm.getByLabel("주제").fill(study);
+  await studyForm.getByRole("button", { name: "공부 추가" }).click();
+  await expect(kanbanSection.getByText(study)).toBeVisible();
 
   const project = `E2E Project ${Date.now()}`;
-  await page.getByRole("tab", { name: "Projects" }).click();
-  const projectSection = page
-    .locator("section")
-    .filter({ has: page.getByRole("heading", { name: "Portfolio Projects" }) });
+  const projectForm = kanbanSection.getByRole("form", { name: "프로젝트 추가" });
 
-  await projectSection.locator("form").getByLabel("프로젝트").fill(project);
-  await projectSection.locator("form").getByLabel("목표").fill("E2E smoke flow");
-  await projectSection.locator("form").getByRole("button", { name: "프로젝트 추가" }).click();
-  await expect(projectSection.getByText(project)).toBeVisible();
+  await projectForm.getByLabel("프로젝트").fill(project);
+  await projectForm.getByLabel("목표").fill("E2E smoke flow");
+  await projectForm.getByRole("button", { name: "프로젝트 추가" }).click();
+  await expect(kanbanSection.getByText(project)).toBeVisible();
 
   await expect(page.getByRole("heading", { name: "Codex CLI 상태판" })).toBeVisible();
   await expect(page.getByRole("button", { name: "새로고침" })).toBeVisible();

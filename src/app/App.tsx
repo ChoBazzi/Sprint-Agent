@@ -3,9 +3,7 @@ import { AssistantPanel } from "../components/assistant/AssistantPanel";
 import { CalendarBoard } from "../components/calendar/CalendarBoard";
 import { CalendarHandoffPanel } from "../components/calendar/CalendarHandoffPanel";
 import { DailyCommandCenter } from "../components/dashboard/DailyCommandCenter";
-import { ProjectTracker } from "../components/projects/ProjectTracker";
 import { SprintBoard } from "../components/sprint/SprintBoard";
-import { StudyPlanner } from "../components/study/StudyPlanner";
 import type { AssistantConversationDetail } from "../domain/assistant-chat";
 import type { CalendarExportResult, CalendarProviderStatus } from "../domain/calendar";
 import type { JobApplication } from "../domain/applications";
@@ -44,15 +42,6 @@ import {
   type CreateWorkItemPayload
 } from "../storage/api-client";
 
-type WorkspaceTab = "sprint" | "study" | "projects" | "calendar";
-
-const workspaceTabs: Array<{ id: WorkspaceTab; label: string }> = [
-  { id: "sprint", label: "Kanban" },
-  { id: "study", label: "Study" },
-  { id: "projects", label: "Projects" },
-  { id: "calendar", label: "Calendar" }
-];
-
 export function App() {
   const [sprint, setSprint] = useState<Sprint | null>(null);
   const [applications, setApplications] = useState<JobApplication[]>([]);
@@ -64,7 +53,6 @@ export function App() {
   const [assistantDetail, setAssistantDetail] = useState<AssistantConversationDetail | null>(null);
   const [calendarStatus, setCalendarStatus] = useState<CalendarProviderStatus | null>(null);
   const [calendarResult, setCalendarResult] = useState<CalendarExportResult | null>(null);
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<WorkspaceTab>("sprint");
   const [error, setError] = useState<string | null>(null);
 
   const refreshWorkspace = useCallback(async () => {
@@ -321,66 +309,40 @@ export function App() {
         <div className="section-heading">
           <div>
             <h2 id="workspace-title">작업 관리</h2>
-            <p>필요한 영역만 열어서 수정합니다.</p>
-          </div>
-          <div className="tab-list" role="tablist" aria-label="Workspace sections">
-            {workspaceTabs.map((tab) => (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeWorkspaceTab === tab.id}
-                className={activeWorkspaceTab === tab.id ? "tab-button tab-active" : "tab-button"}
-                onClick={() => setActiveWorkspaceTab(tab.id)}
-                key={tab.id}
-              >
-                {tab.label}
-              </button>
-            ))}
+            <p>캘린더로 날짜를 확인하고, 아래 칸반보드에서 공부와 프로젝트까지 함께 관리합니다.</p>
           </div>
         </div>
 
         <div className="workspace-panel">
-          {activeWorkspaceTab === "sprint" ? (
+          <div className="calendar-workspace">
+            <CalendarBoard
+              sprint={sprint}
+              applications={applications}
+              studyItems={studyItems}
+              assistantActions={assistantDetail?.actions ?? []}
+            />
+            <CalendarHandoffPanel
+              status={calendarStatus}
+              result={calendarResult}
+              isLoading={isCalendarLoading}
+              onConnect={handleConnectGoogleCalendar}
+              onCreateEvent={handleCreateGoogleCalendarEvent}
+            />
             <SprintBoard
               sprint={sprint}
+              studyItems={studyItems}
+              projects={projects}
               onCreateSprint={handleCreateSprint}
               onCreateWorkItem={handleCreateWorkItem}
               onMoveWorkItem={handleMoveWorkItem}
               onPatchWorkItem={handlePatchWorkItem}
               onDeleteWorkItem={handleDeleteWorkItem}
-            />
-          ) : null}
-          {activeWorkspaceTab === "study" ? (
-            <StudyPlanner
-              studyItems={studyItems}
               onCreateStudyItem={handleCreateStudyItem}
               onPatchStudyItem={handlePatchStudyItem}
-            />
-          ) : null}
-          {activeWorkspaceTab === "projects" ? (
-            <ProjectTracker
-              projects={projects}
               onCreateProject={handleCreateProject}
               onPatchProject={handlePatchProject}
             />
-          ) : null}
-          {activeWorkspaceTab === "calendar" ? (
-            <div className="calendar-workspace">
-              <CalendarBoard
-                sprint={sprint}
-                applications={applications}
-                studyItems={studyItems}
-                assistantActions={assistantDetail?.actions ?? []}
-              />
-              <CalendarHandoffPanel
-                status={calendarStatus}
-                result={calendarResult}
-                isLoading={isCalendarLoading}
-                onConnect={handleConnectGoogleCalendar}
-                onCreateEvent={handleCreateGoogleCalendarEvent}
-              />
-            </div>
-          ) : null}
+          </div>
         </div>
       </section>
     </main>
