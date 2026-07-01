@@ -1,8 +1,8 @@
-# Developer Job-Prep Assistant
+# 개발자 취업 준비 개인 비서
 
 개발자 취업 준비를 Sprint 방식으로 운영하기 위한 개인용 웹앱입니다. 개인 일정, 공부 항목, 회사 지원 현황, 이력서 버전, 포트폴리오 프로젝트를 PostgreSQL에 저장하고, 로컬 Codex CLI와 MCP 서버를 통해 개인 일정 비서 상태를 추적합니다.
 
-## Quick Start
+## 빠른 시작
 
 ```bash
 npm install
@@ -15,17 +15,17 @@ npm run dev
 
 앱은 `http://127.0.0.1:5173/`에서 열립니다. API 서버는 `http://127.0.0.1:3001/`에서 실행됩니다.
 
-## Commands
+## 명령어
 
-| Command | Description |
+| 명령어 | 설명 |
 | --- | --- |
-| `npm run dev` | Vite frontend와 Express API를 함께 실행 |
-| `npm run build` | 서버 TypeScript와 프론트엔드 프로덕션 빌드 |
+| `npm run dev` | Vite 프론트엔드와 Express API를 함께 실행 |
+| `npm run build` | 서버 TypeScript와 프론트엔드 프로덕션 빌드 실행 |
 | `npm run test` | Vitest 단위/통합 테스트 실행 |
-| `npm run test:e2e` | seed 데이터를 넣고 Playwright 브라우저 테스트 실행 |
-| `npm run lint` | frontend/server TypeScript 타입 검사 |
+| `npm run test:e2e` | seed 데이터를 넣은 뒤 Playwright 브라우저 테스트 실행 |
+| `npm run lint` | 프론트엔드/서버 TypeScript 타입 검사 |
 | `npm run db:up` | Docker Compose PostgreSQL 시작 |
-| `npm run db:migrate` | Prisma migration 적용 |
+| `npm run db:migrate` | Prisma 마이그레이션 적용 |
 | `npm run db:seed` | 샘플 Sprint, 지원건, 공부, 프로젝트 데이터 생성 |
 | `npm run db:backup` | `backups/`에 PostgreSQL custom dump 생성 |
 | `npm run db:restore -- backups/<file>.dump` | dump 파일에서 PostgreSQL 복구 |
@@ -33,57 +33,57 @@ npm run dev
 | `npm run mcp:assistant` | Codex가 사용하는 로컬 Personal Assistant MCP 서버 실행 |
 | `npm run mcp:calendar` | 기존 Calendar MCP 실행 별칭 |
 
-## Architecture
+## 구조
 
-- Frontend: React, TypeScript, Vite
-- Backend: Node.js, TypeScript, Express
-- Database: PostgreSQL 17 through Docker Compose
-- ORM/migrations: Prisma
-- Tests: Vitest and Playwright
-- AI assistant: local Codex CLI as the primary conversational surface
-- MCP tools: project-scoped Personal Assistant MCP server in `.codex/config.toml`
-- Calendar: optional Google Calendar handoff through server-side OAuth
+- 프론트엔드: React, TypeScript, Vite
+- 백엔드: Node.js, TypeScript, Express
+- 데이터베이스: Docker Compose로 실행하는 PostgreSQL 17
+- ORM/마이그레이션: Prisma
+- 테스트: Vitest, Playwright
+- AI 비서: 로컬 Codex CLI를 기본 대화 인터페이스로 사용
+- MCP 도구: `.codex/config.toml`에 등록된 프로젝트 전용 Personal Assistant MCP 서버
+- 캘린더: 서버 측 OAuth를 통한 선택적 Google Calendar 연동
 
-The browser calls application-owned endpoints only. Codex credentials and local auth state stay outside the repository and are never sent to the frontend.
+브라우저는 이 애플리케이션이 소유한 API 엔드포인트만 호출합니다. Codex 인증 정보와 로컬 로그인 상태는 저장소 밖에 두며, 프론트엔드로 전달하지 않습니다.
 
-## Product Scope
+## 제품 범위
 
-Implemented MVP workflows:
+구현된 MVP 흐름:
 
-- Daily Command Center for today's focus and planning alerts.
-- Sprint board with create, edit, move, and delete for work items.
-- Job follow-up signals in the command center; detailed application/resume management is no longer part of the main screen.
-- Study planner with progress, target dates, review dates, and statuses.
-- Portfolio project tracker with next actions and readiness flags.
-- Codex CLI status board with stored MCP conversation events and tracked calendar action drafts.
-- Google Calendar handoff for confirmed focus blocks.
+- 오늘 집중할 일과 계획 알림을 보여주는 Daily Command Center.
+- 작업 생성, 수정, 이동, 삭제가 가능한 Sprint 보드.
+- 메인 화면에서 회사 지원 후속 행동 신호 표시. 상세 지원/이력서 관리는 메인 UX에서 제외.
+- 진행률, 목표일, 복습일, 상태를 관리하는 공부 계획 기능.
+- 다음 액션과 포트폴리오 준비 상태를 추적하는 프로젝트 관리 기능.
+- MCP 대화 이벤트와 캘린더 작업 초안을 보여주는 Codex CLI 상태판.
+- 확정한 집중 시간을 Google Calendar로 넘기는 handoff 기능.
 
-Deferred by design:
+의도적으로 미룬 범위:
 
-- Authentication and authorization.
-- Calendar/job-site/email/Notion integrations.
-- Resume file upload.
-- Automatic assistant actions that mutate user data.
-- Public hosted service deployment.
+- 인증과 인가.
+- Calendar 읽기 동기화, 채용 사이트, 이메일, Notion 연동.
+- 이력서 파일 업로드.
+- 사용자 데이터를 자동으로 변경하는 비서 액션.
+- 공개 서비스 배포.
 
-## Codex Mode
+## Codex 모드
 
-Default mode is deterministic and local:
+기본 모드는 Codex를 호출하지 않는 로컬 결정형 모드입니다.
 
 ```env
 AI_ASSISTANT_MODE=stub
 ```
 
-To use the existing local Codex login/subscription, set:
+기존 로컬 Codex 로그인/이용권을 사용하려면 다음 값을 설정합니다.
 
 ```env
 AI_ASSISTANT_MODE=codex
 CODEX_ASSISTANT_TIMEOUT_MS=60000
 ```
 
-Codex CLI is the primary conversational interface. The web app is a status and approval dashboard: it reads MCP-recorded conversation events and lets you approve, reject, or apply tracked calendar actions.
+Codex CLI가 기본 대화 인터페이스입니다. 웹앱은 상태 확인과 승인 대시보드 역할을 합니다. MCP가 기록한 대화 이벤트를 읽고, 추적 중인 캘린더 작업을 승인, 거절, 반영할 수 있습니다.
 
-Codex sees the project-scoped `personal_assistant` MCP server. The server exposes workspace snapshot, read-only recent logs, automatic work-log append, and calendar draft tools. Logs can be added automatically for tracking, but calendar draft creation requires a final conversation confirmation sentence such as `오늘 18:00 test 일정 내용으로 추가하겠습니다.` Calendar writes are tracked as assistant actions first:
+Codex는 프로젝트 전용 `personal_assistant` MCP 서버를 사용합니다. 이 서버는 워크스페이스 스냅샷, 읽기 전용 최근 로그, 자동 작업 로그 추가, 캘린더 초안 도구를 제공합니다. 로그는 추적을 위해 자동으로 추가할 수 있지만, 캘린더 초안 생성은 `오늘 18:00 test 일정 내용으로 추가하겠습니다.` 같은 최종 확인 문장을 요구합니다. 캘린더 쓰기는 먼저 비서 작업 상태로 추적됩니다.
 
 ```text
 proposed -> approved -> applied
@@ -91,13 +91,13 @@ proposed -> rejected
 approved -> failed
 ```
 
-The web status board must approve an action before it can be applied. Legacy backend review endpoints still support `AI_ASSISTANT_MODE=stub` or `AI_ASSISTANT_MODE=codex`, but the main assistant workflow is CLI-driven.
+웹 상태판에서 작업을 승인해야 실제 반영할 수 있습니다. 기존 백엔드 리뷰 엔드포인트는 여전히 `AI_ASSISTANT_MODE=stub` 또는 `AI_ASSISTANT_MODE=codex`를 지원하지만, 메인 비서 흐름은 CLI 기반입니다.
 
 ## Google Calendar
 
-Google Calendar is optional. The app remains the source of truth, and Google Calendar is used for confirmed time blocks and phone calendar visibility.
+Google Calendar 연동은 선택 사항입니다. 앱이 계획 데이터의 기준이며, Google Calendar는 확정된 시간 블록을 휴대폰 캘린더에서 볼 수 있게 하는 외부 반영 계층입니다.
 
-Set these values in `.env` after creating a Google OAuth client:
+Google OAuth 클라이언트를 만든 뒤 `.env`에 다음 값을 설정합니다.
 
 ```env
 APP_ORIGIN="http://127.0.0.1:5173"
@@ -109,16 +109,16 @@ GOOGLE_CALENDAR_TOKEN_PATH="private/google-calendar-token.json"
 GOOGLE_CALENDAR_STATE_PATH="private/google-calendar-state.json"
 ```
 
-The OAuth token file is intentionally stored under `private/`, which is ignored by Git.
+OAuth 토큰 파일은 Git이 무시하는 `private/` 아래에 저장합니다.
 
-## Data Boundary
+## 데이터 경계
 
-This repository is safe to publish only when it contains code and sample data. Do not commit `.env`, database dumps, real resumes, personal job notes, tokens, Codex auth files, or local backups. See [docs/security/git-data-boundary.md](docs/security/git-data-boundary.md) for the pre-push checklist.
+이 저장소는 코드와 샘플 데이터만 포함할 때만 공개해도 안전합니다. `.env`, 데이터베이스 dump, 실제 이력서, 개인 지원 메모, 토큰, Codex 인증 파일, 로컬 백업은 커밋하지 마세요. push 전 확인 목록은 [docs/security/git-data-boundary.md](docs/security/git-data-boundary.md)를 참고하세요.
 
-## Docs
+## 문서
 
-- [MVP spec](docs/specs/developer-assistant-webapp.md)
-- [Codex MCP calendar assistant spec](docs/specs/codex-mcp-calendar-assistant.md)
-- [Implementation plan](docs/plans/developer-assistant-mvp-plan.md)
-- [Current status](docs/status/mvp-status-2026-06-29.md)
-- [Git and data boundary](docs/security/git-data-boundary.md)
+- [MVP 명세](docs/specs/developer-assistant-webapp.md)
+- [Codex MCP 캘린더 비서 명세](docs/specs/codex-mcp-calendar-assistant.md)
+- [구현 계획](docs/plans/developer-assistant-mvp-plan.md)
+- [현재 상태](docs/status/mvp-status-2026-06-29.md)
+- [Git 및 데이터 경계](docs/security/git-data-boundary.md)
