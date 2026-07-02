@@ -19,7 +19,7 @@ type CalendarEvent = {
   tone: CalendarEventTone;
 };
 
-const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
+export const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
 export function CalendarBoard({
   sprint,
@@ -170,11 +170,10 @@ function buildCalendarEvents({
   ].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
 }
 
-function buildMonthGrid(month: Date): Date[] {
+export function buildMonthGrid(month: Date): Date[] {
   const firstDay = startOfMonth(month);
-  const mondayOffset = (firstDay.getDay() + 6) % 7;
   const firstGridDate = new Date(firstDay);
-  firstGridDate.setDate(firstDay.getDate() - mondayOffset);
+  firstGridDate.setDate(firstDay.getDate() - firstDay.getDay());
 
   return Array.from({ length: 42 }, (_, index) => {
     const day = new Date(firstGridDate);
