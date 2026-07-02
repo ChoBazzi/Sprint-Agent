@@ -9,6 +9,10 @@ import type {
 } from "../../domain/assistant-chat.js";
 import { isValidCalendarRange, type CalendarEventDraft } from "../../domain/calendar.js";
 import {
+  CalendarVerificationSubagent,
+  type CalendarVerificationResult
+} from "../calendar/calendar-verification-subagent.js";
+import {
   GoogleCalendarService,
   type GoogleCalendarConfig
 } from "../calendar/google-calendar.js";
@@ -46,6 +50,7 @@ export type UpdateCalendarActionInput = CalendarEventDraft & {
 type AssistantActionServiceOptions = {
   calendarService?: GoogleCalendarService;
   calendarConfig?: GoogleCalendarConfig;
+  calendarVerifier?: CalendarVerificationSubagent;
 };
 
 export class AssistantActionError extends Error {
@@ -60,6 +65,7 @@ export class AssistantActionError extends Error {
 
 export class AssistantActionService {
   private readonly calendarService: GoogleCalendarService;
+  private readonly calendarVerifier: CalendarVerificationSubagent;
 
   constructor(
     private readonly prisma: PrismaClient,
@@ -67,6 +73,8 @@ export class AssistantActionService {
   ) {
     this.calendarService =
       options.calendarService ?? new GoogleCalendarService({ config: options.calendarConfig });
+    this.calendarVerifier =
+      options.calendarVerifier ?? new CalendarVerificationSubagent(this.calendarService);
   }
 
   async listConversations(): Promise<AssistantConversation[]> {
@@ -317,6 +325,21 @@ export class AssistantActionService {
       sourceId: action.sourceId ?? undefined
     });
 
+    await this.prisma.assistantAction.update({
+      where: { id: action.id },
+      data: {
+        provider: result.provider,
+        calendarId: result.calendarId,
+        externalEventId: result.eventId,
+        result: result as unknown as Prisma.InputJsonValue
+      }
+    });
+
+    const verification = await this.calendarVerifier.verifyEventMatches({
+      eventId: result.eventId,
+      expected: toCalendarEventDraft(action)
+    });
+
     await this.prisma.calendarEventLink.create({
       data: {
         provider: result.provider,
@@ -339,7 +362,7 @@ export class AssistantActionService {
         provider: result.provider,
         calendarId: result.calendarId,
         externalEventId: result.eventId,
-        result: result as unknown as Prisma.InputJsonValue,
+        result: toActionResult(result, verification),
         error: null
       }
     });
@@ -372,6 +395,11 @@ export class AssistantActionService {
         sourceType: action.sourceType as CalendarEventDraft["sourceType"],
         sourceId: action.sourceId ?? undefined
       }
+    });
+
+    const verification = await this.calendarVerifier.verifyEventMatches({
+      eventId: result.eventId,
+      expected: toCalendarEventDraft(action)
     });
 
     await this.prisma.calendarEventLink.upsert({
@@ -412,7 +440,7 @@ export class AssistantActionService {
         provider: result.provider,
         calendarId: result.calendarId,
         externalEventId: result.eventId,
-        result: result as unknown as Prisma.InputJsonValue,
+        result: toActionResult(result, verification),
         error: null
       }
     });
@@ -533,6 +561,36 @@ function toPrismaMessageRole(role: AssistantMessageRole) {
 
 function toPrismaActionStatus(status: AssistantActionStatus) {
   return status.toUpperCase() as "PROPOSED" | "APPROVED" | "APPLIED" | "REJECTED" | "FAILED";
+}
+
+function toCalendarEventDraft(action: PrismaAssistantAction): CalendarEventDraft {
+  if (!action.summary || !action.startDateTime || !action.endDateTime || !action.timeZone) {
+    throw new AssistantActionError(
+      "INCOMPLETE_CALENDAR_ACTION",
+      "Calendar action is missing required verification fields.",
+      422
+    );
+  }
+
+  return {
+    summary: action.summary,
+    description: action.description ?? undefined,
+    startDateTime: action.startDateTime.toISOString(),
+    endDateTime: action.endDateTime.toISOString(),
+    timeZone: action.timeZone,
+    sourceType: action.sourceType as CalendarEventDraft["sourceType"],
+    sourceId: action.sourceId ?? undefined
+  };
+}
+
+function toActionResult(
+  result: { provider: string; calendarId: string; eventId: string; htmlLink?: string },
+  verification: CalendarVerificationResult
+): Prisma.InputJsonValue {
+  return {
+    ...result,
+    verification
+  } as unknown as Prisma.InputJsonValue;
 }
 
 function normalizeTitle(title?: string): string {

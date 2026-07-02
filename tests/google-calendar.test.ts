@@ -204,6 +204,56 @@ describe("GoogleCalendarService", () => {
       htmlLink: "https://calendar.google.com/event?eid=event-1"
     });
   });
+
+  it("reads a Google Calendar event snapshot by event id", async () => {
+    const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
+    const tokenStore = new MemoryGoogleTokenStore({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      expiresAt: Date.now() + 3600 * 1000
+    });
+    const service = new GoogleCalendarService({
+      config: makeConfig({ calendarId: "primary" }),
+      tokenStore,
+      fetch: async (input, init) => {
+        calls.push({ input, init });
+        return jsonResponse({
+          id: "event-1",
+          htmlLink: "https://calendar.google.com/event?eid=event-1",
+          summary: "정보처리기사 실기",
+          description: "시험 일정",
+          start: {
+            dateTime: "2026-07-19T09:00:00+09:00",
+            timeZone: "Asia/Seoul"
+          },
+          end: {
+            dateTime: "2026-07-19T12:00:00+09:00",
+            timeZone: "Asia/Seoul"
+          }
+        });
+      }
+    });
+
+    const snapshot = await service.getEvent({ eventId: "event-1" });
+
+    expect(String(calls[0].input)).toBe(
+      "https://www.googleapis.com/calendar/v3/calendars/primary/events/event-1"
+    );
+    expect(calls[0].init).toMatchObject({
+      method: "GET",
+      headers: {
+        Authorization: "Bearer access-token"
+      }
+    });
+    expect(snapshot).toMatchObject({
+      id: "event-1",
+      summary: "정보처리기사 실기",
+      description: "시험 일정",
+      startDateTime: "2026-07-19T09:00:00+09:00",
+      endDateTime: "2026-07-19T12:00:00+09:00",
+      timeZone: "Asia/Seoul"
+    });
+  });
 });
 
 class MemoryGoogleTokenStore implements GoogleTokenStore {

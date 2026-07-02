@@ -55,6 +55,16 @@ type GoogleCalendarServiceOptions = {
   fetch?: Fetch;
 };
 
+export type GoogleCalendarEventSnapshot = {
+  id: string;
+  htmlLink?: string;
+  summary?: string;
+  description?: string;
+  startDateTime?: string;
+  endDateTime?: string;
+  timeZone?: string;
+};
+
 const tokenResponseSchema = z.object({
   access_token: z.string(),
   refresh_token: z.string().optional(),
@@ -66,6 +76,23 @@ const tokenResponseSchema = z.object({
 const eventResponseSchema = z.object({
   id: z.string(),
   htmlLink: z.string().optional()
+});
+
+const eventDetailResponseSchema = eventResponseSchema.extend({
+  summary: z.string().optional(),
+  description: z.string().optional(),
+  start: z
+    .object({
+      dateTime: z.string().optional(),
+      timeZone: z.string().optional()
+    })
+    .optional(),
+  end: z
+    .object({
+      dateTime: z.string().optional(),
+      timeZone: z.string().optional()
+    })
+    .optional()
 });
 
 export class CalendarIntegrationError extends Error {
@@ -225,6 +252,40 @@ export class GoogleCalendarService {
       calendarId: this.config.calendarId,
       eventId: event.id,
       htmlLink: event.htmlLink
+    };
+  }
+
+  async getEvent(input: { eventId: string }): Promise<GoogleCalendarEventSnapshot> {
+    this.assertConfigured();
+    const token = await this.getUsableToken();
+    const response = await this.fetchImpl(
+      `${GOOGLE_CALENDAR_API_URL}/calendars/${encodeURIComponent(this.config.calendarId)}/events/${encodeURIComponent(input.eventId)}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token.accessToken}`
+        }
+      }
+    );
+
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new CalendarIntegrationError(
+        "GOOGLE_CALENDAR_EVENT_READ_FAILED",
+        extractGoogleErrorMessage(payload),
+        response.status
+      );
+    }
+
+    const event = eventDetailResponseSchema.parse(payload);
+    return {
+      id: event.id,
+      htmlLink: event.htmlLink,
+      summary: event.summary,
+      description: event.description,
+      startDateTime: event.start?.dateTime,
+      endDateTime: event.end?.dateTime,
+      timeZone: event.start?.timeZone ?? event.end?.timeZone
     };
   }
 
